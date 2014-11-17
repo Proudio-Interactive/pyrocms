@@ -1,0 +1,25 @@
+<phpunit
+	bootstrap="./Bootstrap.php"
+	colors="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+	stopOnError="false"
+	stopOnFailure="false"
+	stopOnIncomplete="false"
+	stopOnSkipped="false">
+    <testsuites>
+        <testsuite name="all">
+
+	        <testsuite name="installer">
+	            <directory>1-installer</directory>
+	            <files>*.php</files>
+	        </testsuite>
+
+	        <testsuite name="cp">
+	            <directory>2-cp</directory>
+	            <files>*.php</files>
+	        </testsuite>
+
+        </testsuite>
+    </testsuites>
+</phpunit>

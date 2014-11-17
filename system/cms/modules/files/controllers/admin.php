@@ -1,607 +1,363 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
-/**
- * PyroCMS
- *
- * An open source CMS based on CodeIgniter
- *
- * @package		PyroCMS
- * @author		PyroCMS Dev Team
- * @license		Apache License v2.0
- * @link		http://pyrocms.com
- * @since		Version 1.0
- */
+<?php
+
+use Pyro\Module\Files\Model\File;
+use Pyro\Module\Files\Model\Folder as FolderModel;
+use Pyro\Module\Files\Model\Folder;
 
 /**
  * PyroCMS file Admin Controller
  *
  * Provides an admin for the file module.
  *
- * @author		PyroCMS Dev Team
- * @package		PyroCMS
- * @subpackage	Modules
- * @category	Files
+ * @author      PyroCMS Dev Team
+ * @package     PyroCMS\Core\Modules\Files\Controllers
  */
-class Admin extends Admin_Controller {
-
-	private $_folders	= array();
-	private $_path 		= '';
-	private $_type 		= NULL;
-	private $_ext 		= NULL;
-	private $_filename	= NULL;
-	private $_validation_rules = array(
-		array(
-			'field' => 'userfile',
-			'label' => 'lang:files.file_label',
-			'rules' => 'callback__check_ext'
-		),
-		array(
-			'field' => 'name',
-			'label' => 'lang:files.name_label',
-			'rules' => 'trim|required|max_length[250]'
-		),
-		array(
-			'field' => 'description',
-			'label' => 'lang:files.description_label',
-			'rules' => 'trim|max_length[250]'
-		),
-		array(
-			'field' => 'type',
-			'label' => 'lang:files.type_label',
-			'rules' => 'trim|max_length[1]'
-		),
-		array(
-			'field' => 'folder_id',
-			'label' => 'lang:file_folders.parent_label',
-			'rules' => 'trim|is_numeric'
-		)
-	);
-
-	/**
-	 * Constructor
-	 *
-	 * Loads dependencies.
-	 *
-	 * @access	public
-	 * @return	void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-
-		$this->config->load('files');
-		$this->lang->load('files');
-		$this->load->models(array(
-			'file_m',
-			'file_folders_m'
-		));
-
-		$this->load->library('form_validation');
-		$this->form_validation->set_rules($this->_validation_rules);
-
-		$this->_folders = $this->file_folders_m->get_folders();
-
-		// Get the parent -> childs
-		$this->data->folders_tree = array();
-		foreach ($this->_folders as $folder)
-		{
-			$this->data->folders_tree[$folder->id] = repeater('&raquo; ', $folder->depth) . $folder->name;
-		}
-
-		$this->template
-			->set_partial('shortcuts', 'admin/partials/shortcuts')
-			->set_partial('nav', 'admin/partials/nav', array(
-				'file_folders'	=> $this->_folders,
-				'current_id'	=> 0
-			));
-
-		$this->_path = FCPATH . $this->config->item('files_folder');
-		$this->_check_dir();
-	}
-
-	/**
-	 * Index
-	 *
-	 * Shows the default
-	 *
-	 * @access	public
-	 * @return	void
-	 */
-	public function index()
-	{
-		$this->data->file_folders	= $this->_folders;
-		$this->data->content		= $this->load->view('admin/folders/index', $this->data, TRUE);
-
-		$this->template
-			->title($this->module_details['name'])
-			->append_metadata( css('jquery.fileupload-ui.css', 'files') )
-			->append_metadata( css('files.css', 'files') )
-			->append_metadata( js('jquery/jquery.cooki.js') )
-			->append_metadata( js('jquery.fileupload.js', 'files') )
-			->append_metadata( js('jquery.fileupload-ui.js', 'files') )
-			->append_metadata( js('jquery.ba-hashchange.min.js', 'files') )
-			->append_metadata( js('functions.js', 'files') )
-			->build('admin/layouts/index', $this->data);
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Upload
-	 *
-	 * Upload a file to the destination folder
-	 *
-	 * @params int	The folder id
-	 */
-	public function upload($folder_id = '')
-	{
-		$this->data->folders = $this->_folders;
-				
-		if ($this->form_validation->run())
-		{
-			// Setup upload config
-			$this->load->library('upload', array(
-				'upload_path'	=> $this->_path,
-				'allowed_types'	=> $this->_ext,
-				'file_name'		=> $this->_filename
-			));
-
-			// File upload error
-			if ( ! $this->upload->do_upload('userfile'))
-			{
-				$status		= 'error';
-				$message	= $this->upload->display_errors();
-
-				if ($this->input->is_ajax_request())
-				{
-					$data = array();
-					$data['messages'][$status] = $message;
-					$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-					return $this->template->build_json(array(
-						'status'	=> $status,
-						'message'	=> $message
-					));
-				}
-
-				$this->data->messages[$status] = $message;
-			}
-
-			// File upload success
-			else
-			{
-				$file = $this->upload->data();
-				$data = array(
-					'folder_id'		=> (int) $this->input->post('folder_id'),
-					'user_id'		=> (int) $this->current_user->id,
-					'type'			=> $this->_type,
-					'name'			=> $this->input->post('name'),
-					'description'	=> $this->input->post('description') ? $this->input->post('description') : '',
-					'filename'		=> $file['file_name'],
-					'extension'		=> $file['file_ext'],
-					'mimetype'		=> $file['file_type'],
-					'filesize'		=> $file['file_size'],
-					'width'			=> (int) $file['image_width'],
-					'height'		=> (int) $file['image_height'],
-					'date_added'	=> now()
-				);
-
-				// Insert success
-				if ($id = $this->file_m->insert($data))
-				{
-					$status		= 'success';
-					$message	= lang('files.create_success');
-				}
-				// Insert error
-				else
-				{
-					$status		= 'error';
-					$message	= lang('files.create_error');
-				}
-
-				if ($this->input->is_ajax_request())
-				{
-					$data = array();
-					$data['messages'][$status] = $message;
-					$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-					return $this->template->build_json(array(
-						'status'	=> $status,
-						'message'	=> $message,
-						'file'		=> array(
-							'name'	=> $file['file_name'],
-							'type'	=> $file['file_type'],
-							'size'	=> $file['file_size'],
-							'thumb'	=> base_url() . 'files/thumb/' . $id . '/80'
-						)
-					));
-				}
-
-				if ($status === 'success')
-				{
-					$this->session->set_flashdata($status, $message);
-					redirect('admin/files');
-				}
-			}
-		}
-		elseif (validation_errors())
-		{
-			// if request is ajax return json data, otherwise do normal stuff
-			if ($this->input->is_ajax_request())
-			{
-				$message = $this->load->view('admin/partials/notices', array(), TRUE);
-
-				return $this->template->build_json(array(
-					'status'	=> 'error',
-					'message'	=> $message
-				));
-			}
-		}
-
-		if ($this->input->is_ajax_request())
-		{
-			// todo: debug errors here
-			$status		= 'error';
-			$message	= 'unknown';
-
-			$data = array();
-			$data['messages'][$status] = $message;
-			$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-			return $this->template->build_json(array(
-				'status'	=> $status,
-				'message'	=> $message
-			));
-		}
-
-		// Loop through each validation rule
-		foreach ($this->_validation_rules as $rule)
-		{
-			if ($rule['field'] == 'folder_id') 
-			{
-				$this->data->file->{$rule['field']} = set_value($rule['field'], $folder_id);
-			}
-			else
-			{
-				$this->data->file->{$rule['field']} = set_value($rule['field']);
-			}
-			
-		}
-
-		$this->template
-			->title()
-			->build('admin/files/upload', $this->data);
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Edit Uploaded file
-	 *
-	 */
-	public function edit($id = '')
-	{
-		if ( ! ($id && ($file = $this->file_m->get($id))))
-		{
-			$status		= 'error';
-			$message	= lang('files.file_label_not_found');
-
-			if ($this->input->is_ajax_request())
-			{
-				$data = array();
-				$data['messages'][$status] = $message;
-				$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-				return $this->template->build_json(array(
-					'status'	=> $status,
-					'message'	=> $message
-				));
-			}
-
-			$this->session->set_flashdata($status, $message);
-			redirect('admin/files');
-		}
-
-		$this->data->file =& $file;
-
-		if ($this->form_validation->run())
-		{
-			// We are uploading a new file
-			if ( ! empty($_FILES['userfile']['name']))
-			{
-				// Setup upload config
-				$this->load->library('upload', array(
-					'upload_path'	=> $this->_path,
-					'allowed_types'	=> $this->_ext
-				));
-
-				// File upload error
-				if ( ! $this->upload->do_upload('userfile'))
-				{
-					$status		= 'error';
-					$message	= $this->upload->display_errors();
-
-					if ($this->input->is_ajax_request())
-					{
-						$data = array();
-						$data['messages'][$status] = $message;
-						$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-						return $this->template->build_json(array(
-							'status'	=> $status,
-							'message'	=> $message
-						));
-					}
-
-					$this->data->messages[$status] = $message;
-				}
-				// File upload success
-				else
-				{
-					// Remove the original file
-					$this->file_m->delete_file($id);
-
-					$file = $this->upload->data();
-					$data = array(
-						'folder_id'		=> (int) $this->input->post('folder_id'),
-						'user_id'		=> (int) $this->current_user->id,
-						'type'			=> $this->_type,
-						'name'			=> $this->input->post('name'),
-						'description'	=> $this->input->post('description'),
-						'filename'		=> $file['file_name'],
-						'extension'		=> $file['file_ext'],
-						'mimetype'		=> $file['file_type'],
-						'filesize'		=> $file['file_size'],
-						'width'			=> (int) $file['image_width'],
-						'height'		=> (int) $file['image_height'],
-					);
-
-					if ($this->file_m->update($id, $data))
-					{
-						$status		= 'success';
-						$message	= lang('files.edit_success');
-					}
-					else
-					{
-						$status		= 'error';
-						$message	= lang('files.edit_error');
-					};
-
-					if ($this->input->is_ajax_request())
-					{
-						$data = array();
-						$data['messages'][$status] = $message;
-						$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-						return $this->template->build_json(array(
-							'status'	=> $status,
-							'message'	=> $message,
-							'title'		=> $status === 'success' ? sprintf(lang('files.edit_title'), $this->input->post('name')) : $file->name
-						));
-					}
-
-					if ($status === 'success')
-					{
-						$this->session->set_flashdata($status, $message);
-						redirect ('admin/files');
-					}
-				}
-			}
-
-			// Upload data
-			else
-			{
-				$data = array(
-					'folder_id'		=> $this->input->post('folder_id'),
-					'user_id'		=> $this->current_user->id,
-					'name'			=> $this->input->post('name'),
-					'description'	=> $this->input->post('description')
-				);
-
-				if ($this->file_m->update($id, $data))
-				{
-					$status		= 'success';
-					$message	= lang('files.edit_success');
-				}
-				else
-				{
-					$status		= 'error';
-					$message	= lang('files.edit_error');
-				};
-
-				if ($this->input->is_ajax_request())
-				{
-					$data = array();
-					$data['messages'][$status] = $message;
-					$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-					return $this->template->build_json(array(
-						'status'	=> $status,
-						'message'	=> $message,
-						'title'		=> $status === 'success' ? sprintf(lang('files.edit_title'), $this->input->post('name')) : $file->name
-					));
-				}
-
-				if ($status === 'success')
-				{
-					$this->session->set_flashdata($status, $message);
-					redirect ('admin/files');
-				}
-			}
-		}
-		elseif (validation_errors())
-		{
-			// if request is ajax return json data, otherwise do normal stuff
-			if ($this->input->is_ajax_request())
-			{
-				$message = $this->load->view('admin/partials/notices', array(), TRUE);
-
-				return $this->template->build_json(array(
-					'status'	=> 'error',
-					'message'	=> $message
-				));
-			}
-		}
-
-		$this->input->is_ajax_request() && $this->template->set_layout(FALSE);
-
-		$this->template
-			->title('')
-			->build('admin/files/edit', $this->data);
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Delete a file
-	 *
-	 * @params 	int The file id
-	 */
-	public function delete($id = 0)
-	{
-		$ids = $id
-			? is_array($id)
-				? $id
-				: array($id)
-			: (array) $this->input->post('action_to');
-
-		$total		= sizeof($ids);
-		$deleted	= array();
-
-		// Try do deletion
-		foreach ($ids as $id)
-		{
-			// Get the row to use a value.. as title, name
-			if ($file = $this->file_m->get($id))
-			{
-				// Make deletion retrieving an status and store an value to display in the messages
-				$deleted[($this->file_m->delete($id) ? 'success': 'error')][] = $file->filename;
-
-				$folder	= $this->_folders[$file->folder_id];
-			}
-		}
-
-		// Set status messages
-		foreach ($deleted as $status => $values)
-		{
-			// Mass deletion
-			if (($status_total = sizeof($values)) > 1)
-			{
-				$last_value		= array_pop($values);
-				$first_values	= implode(', ', $values);
-
-				// Success / Error message
-				$this->session->set_flashdata($status, sprintf(lang('files.mass_delete_' . $status), $status_total, $total, $first_values, $last_value));
-			}
-
-			// Single deletion
-			else
-			{
-				// Success / Error messages
-				$this->session->set_flashdata($status, sprintf(lang('files.delete_' . $status), $values[0]));
-			}
-		}
-
-		// He arrived here but it was not done nothing, certainly valid ids not were selected
-		if ( ! $deleted)
-		{
-			$this->session->set_flashdata('error', lang('files.no_select_error'));
-		}
-
-		// Redirect
-		isset($folder) ? redirect('admin/files/#!path=' . $folder->virtual_path) : redirect('admin/files');
-	}
-
-	/**
-	 * Helper method to determine what to do with selected items from form post
-	 * @access public
-	 * @return void
-	 */
-	public function action()
-	{
-		switch($this->input->post('btnAction'))
-		{
-			case 'delete':
-				$this->delete();
-			break;
-			default:
-				redirect('admin/files');
-			break;
-		}
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Validate our upload directory.
-	 */
-	private function _check_dir()
-	{
-		if (is_dir($this->_path) && is_really_writable($this->_path))
-		{
-			return TRUE;
-		}
-		elseif ( ! is_dir($this->_path))
-		{
-			if ( ! @mkdir($this->_path, 0777, TRUE))
-			{
-				$this->data->messages['notice'] = lang('file_folders.mkdir_error');
-				return FALSE;
-			}
-			else
-			{
-				// create a catch all html file for safety
-				$uph = fopen($this->_path . 'index.html', 'w');
-				fclose($uph);
-			}
-		}
-		else
-		{
-			if ( ! chmod($this->_path, 0777))
-			{
-				$this->session->messages['notice'] = lang('file_folders.chmod_error');
-				return FALSE;
-			}
-		}
-	}
-	
-	// ------------------------------------------------------------------------
-	
-	/**
-	 * Validate upload file name and extension and remove special characters.
-	 */
-	function _check_ext()
-	{
-		if ( ! empty($_FILES['userfile']['name']))
-		{
-			$ext		= pathinfo($_FILES['userfile']['name'], PATHINFO_EXTENSION);
-			$allowed	= $this->config->item('files_allowed_file_ext');
-
-			foreach ($allowed as $type => $ext_arr)
-			{				
-				if (in_array(strtolower($ext), $ext_arr))
-				{
-					$this->_type		= $type;
-					$this->_ext			= implode('|', $ext_arr);
-					$this->_filename	= trim(url_title($_FILES['userfile']['name'], 'dash', TRUE), '-');
-
-					break;
-				}
-			}
-
-			if ( ! $this->_ext)
-			{
-				$this->form_validation->set_message('_check_ext', lang('files.invalid_extension'));
-				return FALSE;
-			}
-		}		
-		elseif ($this->method === 'upload')
-		{
-			$this->form_validation->set_message('_check_ext', lang('files.upload_error'));
-			return FALSE;
-		}
-
-		return TRUE;
-	}
+class Admin extends Admin_Controller
+{
+    private $_folders   = array();
+    private $_type      = null;
+    private $_ext       = null;
+    private $_filename  = null;
+
+    // ------------------------------------------------------------------------
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->config->load('files');
+        $this->lang->load('files');
+        $this->load->library('files/files');
+
+        $this->files = new File();
+        $this->folders = new Folder();
+
+        $allowed_extensions = array();
+        foreach (config_item('files:allowed_file_ext') as $type) {
+            $allowed_extensions = array_merge($allowed_extensions, $type);
+        }
+
+        $this->template->append_metadata(
+            "<script>
+                pyro.lang.fetching = '".lang('files:fetching')."';
+                pyro.lang.fetch_completed = '".lang('files:fetch_completed')."';
+                pyro.lang.start = '".lang('files:start')."';
+                pyro.lang.width = '".lang('files:width')."';
+                pyro.lang.height = '".lang('files:height')."';
+                pyro.lang.ratio = '".lang('files:ratio')."';
+                pyro.lang.full_size = '".lang('files:full_size')."';
+                pyro.lang.cancel = '".lang('buttons:cancel')."';
+                pyro.lang.synchronization_started = '".lang('files:synchronization_started')."';
+                pyro.lang.untitled_folder = '".lang('files:untitled_folder')."';
+                pyro.lang.exceeds_server_setting = '".lang('files:exceeds_server_setting')."';
+                pyro.lang.exceeds_allowed = '".lang('files:exceeds_allowed')."';
+                pyro.files = { permissions : ".json_encode(Files::allowedActions($this->current_user))." };
+                pyro.files.max_size_possible = '".Files::$max_size_possible."';
+                pyro.files.max_size_allowed = '".Files::$max_size_allowed."';
+                pyro.files.valid_extensions = '".implode('|', $allowed_extensions)."';
+                pyro.lang.file_type_not_allowed = '".addslashes(lang('files:file_type_not_allowed'))."';
+                pyro.lang.new_folder_name = '".addslashes(lang('files:new_folder_name'))."';
+                pyro.lang.alt_attribute = '".addslashes(lang('files:alt_attribute'))."';
+
+                // deprecated
+                pyro.files.initial_folder_contents = ".(int)$this->session->flashdata('initial_folder_contents').";
+            </script>");
+    }
+
+    /**
+     * Folder Listing
+     */
+    public function index()
+    {
+        $this->template
+            ->title($this->module_details['name'])
+            ->append_css('jquery/jquery.tagsinput.css')
+            ->append_css('module::jquery.fileupload-ui.css')
+            ->append_css('module::files.css')
+            ->append_js('jquery/jquery.tagsinput.js')
+            ->append_js('module::jquery.fileupload.js')
+            ->append_js('module::jquery.fileupload-ui.js')
+            ->append_js('module::functions.js')
+            // should we show the "no data" message to them?
+            ->set('folders', FolderModel::countByParentId(0))
+            ->set('locations', array_combine(Files::$providers, Files::$providers))
+            ->set('folder_tree', Files::folderTree());
+
+        $path_check = Files::checkDir(Files::$path);
+
+        if ( ! $path_check['status']) {
+            $this->template->set('messages', array('error' => $path_check['message']));
+        }
+
+        $this->template->build('admin/index');
+    }
+
+    /**
+     * Create a new folder
+     *
+     * Grabs the parent id and the name of the folder from POST data.
+     */
+    public function new_folder()
+    {
+        // This is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('create_folder', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        $parent_id = $this->input->post('parent');
+        $name = $this->input->post('name');
+
+        $result = Files::createFolder($parent_id, $name);
+
+        if ($result['status']) {
+            Events::trigger('file_folder_created', $result['data']);
+        }
+
+        exit(json_encode($result));
+    }
+
+    /**
+     * Set the initial folder ID to load contents for
+     *
+     * @deprecated
+     *
+     * Accepts the parent id and sets it as flash data
+     */
+    public function initial_folder_contents($id)
+    {
+        $this->session->set_flashdata('initial_folder_contents', $id);
+
+        redirect(site_url('admin/files'));
+    }
+
+    /**
+     * Get all files and folders within a folder
+     *
+     * Grabs the parent id from the POST data.
+     */
+    public function folder_contents()
+    {
+        $parent = $this->input->post('parent');
+
+        echo json_encode(Files::folderContents($parent));
+    }
+
+    /**
+     * See if a container exists with that name.
+     *
+     * This is different than folder_exists() as this checks for unindexed containers.
+     * Grabs the name of the container and the location from the POST data.
+     */
+    public function check_container()
+    {
+        $name = $this->input->post('name');
+        $location = $this->input->post('location');
+
+        echo json_encode(Files::checkContainer($name, $location));
+    }
+
+    /**
+     * Set the order of files and folders
+     */
+    public function order()
+    {
+
+        if ($collection = $this->input->post('order')) {
+            foreach ($collection as $type => $item) {
+                $i = 0;
+
+                foreach ($item as $id) {
+                    $model = ($type == 'folder') ? 'folders' : 'files';
+
+                    $this->{$model}->whereId($id)->update(array('sort' => $i));
+                    $i++;
+                }
+            }
+
+            // let the files library format the return array like all the others
+            echo json_encode(Files::result(true, lang('files:sort_saved')));
+        } else {
+            echo json_encode(Files::result(false, lang('files:save_failed')));
+        }
+    }
+
+    /**
+     * Rename a folder
+     */
+    public function rename_folder()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('edit_folder', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        if ($id = $this->input->post('folder_id') and $name = $this->input->post('name')) {
+            $result = Files::renameFolder($id, $name);
+
+            $result['status'] AND Events::trigger('file_folder_updated', $id);
+
+            echo json_encode($result);
+        }
+    }
+
+    /**
+     * Delete an empty folder
+     */
+    public function delete_folder()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('delete_folder', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        if ($id = $this->input->post('folder_id')) {
+            $result = Files::deleteFolder($id);
+
+            $result['status'] AND Events::trigger('file_folder_deleted', $id);
+
+            echo json_encode($result);
+        }
+    }
+
+    /**
+     * Upload files
+     */
+    public function upload()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('upload', Files::allowedActions($this->current_user)) AND
+            // replacing files needs upload and delete permission
+            ! ( $this->input->post('replace_id') && ! in_array('delete', Files::allowedActions($this->current_user)) )
+        )
+        {
+            show_error(lang('files:no_permissions'));
+        }
+
+        $result = null;
+        $input = $this->input->post();
+
+        if($input['replace_id'] > 0) {
+            $result = Files::replaceFile($input['replace_id'], $input['folder_id'], $input['name'], 'file', $input['width'], $input['height'], $input['ratio'], null, $input['alt_attribute']);
+            $result['status'] AND Events::trigger('file_replaced', $result['data']);
+        } elseif ($input['folder_id'] and $input['name']) {
+            $result = Files::upload($input['folder_id'], $input['name'], 'file', $input['width'], $input['height'], $input['ratio'], null, $input['alt_attribute']);
+            $result['status'] AND Events::trigger('file_uploaded', $result['data']);
+        }
+
+        echo json_encode($result);
+    }
+
+    /**
+     * Rename a file
+     */
+    public function rename_file()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('edit_file', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        if ($id = $this->input->post('file_id') and $name = $this->input->post('name')) {
+            $result = Files::renameFile($id, $name);
+
+            $result['status'] AND Events::trigger('file_updated', $result['data']);
+
+            echo json_encode($result);
+        }
+    }
+
+    /**
+     * Edit description of a file
+     */
+    public function save_description()
+    {
+        $this->load->library('keywords/keywords');
+
+        $description    = $this->input->post('description');
+        $keywords_hash  = $this->keywords->process($this->input->post('keywords'), $this->input->post('old_hash'));
+        $alt_attribute  = $this->input->post('alt_attribute');
+
+        if ($id = $this->input->post('file_id')) {
+            $this->files->find($id)->update(array('description' => $description, 'keywords' => $keywords_hash, 'alt_attribute' => $alt_attribute));
+
+            echo json_encode(Files::result(true, lang('files:description_saved')));
+        }
+    }
+
+    /**
+     * Edit the "alt" attribute of an image file
+     */
+    public function save_alt()
+    {
+        if ($id = $this->input->post('file_id') AND $alt_attribute = $this->input->post('alt_attribute')) {
+            $this->file_m->update($id, array('alt_attribute' => $alt_attribute));
+
+            echo json_encode(Files::result(TRUE, lang('files:alt_saved')));
+        }
+    }
+
+    /**
+     * Edit location of a folder (S3/Cloud Files/Local)
+     */
+    public function save_location()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('set_location', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        if ($id = $this->input->post('folder_id') and $location = $this->input->post('location') and $container = $this->input->post('container')) {
+            $this->file_folders_m->update($id, array('location' => $location));
+
+            echo json_encode(Files::createContainer($container, $location, $id));
+        }
+    }
+
+    /**
+     * Pull new files down from the cloud location
+     */
+    public function synchronize()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('synchronize', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        if ($id = $this->input->post('folder_id')) {
+            echo json_encode(Files::synchronize($id));
+        }
+    }
+
+    // ------------------------------------------------------------------------
+
+    /**
+     * Delete a file
+     *
+     * @access  public
+     * @return  void
+     */
+    public function delete_file()
+    {
+        // this is just a safeguard if they circumvent the JS permissions
+        if ( ! in_array('delete_file', Files::allowedActions($this->current_user))) {
+            show_error(lang('files:no_permissions'));
+        }
+
+        if ($id = $this->input->post('file_id')) {
+            $result = Files::deleteFile($id);
+
+            $result['status'] AND Events::trigger('file_deleted', $id);
+
+            echo json_encode($result);
+        }
+    }
+
+    /**
+     * Search for files and folders
+     */
+    public function search()
+    {
+        echo json_encode(Files::search($this->input->post('search')));
+    }
+
 }
-
-/* End of file admin.php */

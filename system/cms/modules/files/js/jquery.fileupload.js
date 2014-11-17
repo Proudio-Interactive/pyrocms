@@ -172,21 +172,26 @@
                 var event;
                 if (typeof document.createEvent === func && typeof ProgressEvent !== undef) {
                     event = document.createEvent('ProgressEvent');
-                    event.initProgressEvent(
-                        'progress',
-                        false,
-                        false,
-                        lengthComputable,
-                        loaded,
-                        total
-                    );
-                } else {
-                    event = {
-                        lengthComputable: true,
-                        loaded: loaded,
-                        total: total
-                    };
+                    if (typeof event.initProgressEvent === func) {
+                        event.initProgressEvent(
+                            'progress',
+                            false,
+                            false,
+                            lengthComputable,
+                            loaded,
+                            total
+                        );
+
+                        return event;
+                    }
                 }
+                
+                event = {
+                    lengthComputable: true,
+                    loaded: loaded,
+                    total: total
+                };
+
                 return event;
             },
 
@@ -555,7 +560,7 @@
             legacyUploadFormDataInit = function (input, form, settings) {
                 var formData = getFormData(settings);
                 form.find(':input').not(':disabled')
-                    .attr('disabled', true)
+                    .prop('disabled', true)
                     .addClass(settings.namespace + '_disabled');
                 $.each(formData, function (index, field) {
                     $('<input type="hidden"/>')
@@ -572,7 +577,7 @@
             legacyUploadFormDataReset = function (input, form, settings) {
                 input.detach();
                 form.find('.' + settings.namespace + '_disabled')
-                    .removeAttr('disabled')
+                    .prop('disabled', false)
                     .removeClass(settings.namespace + '_disabled');
                 form.find('.' + settings.namespace + '_form_data').remove();
             },

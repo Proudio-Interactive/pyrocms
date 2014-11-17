@@ -1,25 +1,31 @@
-<?php if ($this->controller == 'admin_categories' && $this->method === 'edit'): ?>
-<h3><?php echo sprintf(lang('cat_edit_title'), $category->title);?></h3>
+<section class="title">
+    <?php if ($this->controller == 'admin_categories' && $this->method === 'edit'): ?>
+    <h4><?php echo sprintf(lang('cat:edit_title'), $category->title) ?></h4>
+    <?php else: ?>
+    <h4><?php echo lang('cat:create_title');?></h4>
+    <?php endif ?>
+</section>
 
-<?php else: ?>
-<h3><?php echo lang('cat_create_title');?></h3>
+<section class="item">
+<div class="content">
+<?php echo form_open($this->uri->uri_string(), 'class="crud'.((isset($mode)) ? ' '.$mode : '').'" id="categories"') ?>
 
-<?php endif; ?>
+<div class="form_inputs">
 
-<?php echo form_open($this->uri->uri_string(), 'class="crud" id="categories"'); ?>
+    <ul>
+        <li class="even">
+            <label for="title"><?php echo lang('global:title') ?> <span>*</span></label>
+            <div class="input"><?php echo form_input('title', $category->title) ?></div>
+            <label for="slug"><?php echo lang('global:slug') ?> <span>*</span></label>
+            <div class="input"><?php echo form_input('slug', $category->slug) ?></div>
+            <?php echo form_hidden('id', $category->id) ?>
+        </li>
+    </ul>
 
-<fieldset>
-	<ol>
-		<li class="even">
-		<label for="title"><?php echo lang('cat_title_label');?></label>
-		<?php echo  form_input('title', $category->title); ?>
-		<span class="required-icon tooltip"><?php echo lang('required_label');?></span>
-		</li>
-	</ol>
+</div>
 
-	<div class="buttons float-right padding-top">
-		<?php $this->load->view('admin/partials/buttons', array('buttons' => array('save', 'cancel') )); ?>
-	</div>
-</fieldset>
+    <div><?php $this->load->view('admin/partials/buttons', array('buttons' => array('save', 'cancel') )) ?></div>
 
-<?php echo form_close(); ?>
+<?php echo form_close() ?>
+</div>
+</section>

@@ -39,7 +39,6 @@
 
 $autoload['packages'] = array();
 
-
 /*
 | -------------------------------------------------------------------
 |  Auto-load Libraries
@@ -50,12 +49,11 @@ $autoload['packages'] = array();
 | Prototype:
 |
 |	$autoload['libraries'] = array('database', 'session', 'xmlrpc');
-
-|	* pyrocache is loaded by MY_Controller to allow the site_ref to be set
+|
+|	Note: Quick Cache is loaded by MY_Controller to allow the site_ref to be set
 */
 
-$autoload['libraries'] = array('asset', 'database', 'session', 'template', 'parser');
-
+$autoload['libraries'] = array('asset', 'database', 'template', 'parser');
 
 /*
 | -------------------------------------------------------------------
@@ -67,10 +65,9 @@ $autoload['libraries'] = array('asset', 'database', 'session', 'template', 'pars
 */
 
 $autoload['helper'] = array(
-	'debug', 'url', 'form', 'text', 'string', 'language', 'asset', 'pagination', 'array', 'gravatar',
-	'comments/comments', 'modules/module', 'users/user'
+	'date', 'debug', 'url', 'form', 'text', 'string', 'language', 'html', 'pagination', 
+    'array', 'gravatar', 'markdown', 'addons/module', 'users/user'
 );
-
 
 /*
 | -------------------------------------------------------------------
@@ -85,8 +82,7 @@ $autoload['helper'] = array(
 |
 */
 
-$autoload['config'] = array('asset', 'language', 'tags');
-
+$autoload['config'] = array('language');
 
 /*
 | -------------------------------------------------------------------
@@ -103,7 +99,6 @@ $autoload['config'] = array('asset', 'language', 'tags');
 
 $autoload['language'] = array('errors');
 
-
 /*
 | -------------------------------------------------------------------
 |  Auto-load Models
@@ -114,8 +109,6 @@ $autoload['language'] = array('errors');
 |
 */
 
-// Autoloaded in MY_Controller
-//	permissions/permission_m', modules/module_m', 'pages/pages_m
 $autoload['model'] = array();
 
 /* End of file autoload.php */

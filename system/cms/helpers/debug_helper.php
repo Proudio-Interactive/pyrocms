@@ -1,24 +1,17 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 /**
-* Code Igniter Debug Helpers
-*
-* @package		CodeIgniter
-* @subpackage	Helpers
-* @category		Helpers
-* @author       Philip Sturgeon < email@philsturgeon.co.uk >
-*/
-
-// ------------------------------------------------------------------------
+ * CodeIgniter Debug Helpers
+ *
+ * @author      PyroCMS Dev Team
+ * @copyright   Copyright (c) 2012, PyroCMS LLC
+ * @package		PyroCMS\Core\Helpers
+ */
 
 /**
-  * Debug Helper
-  *
-  * Outputs the given variable with formatting and location
-  *
-  * @access		public
-  * @param		mixed    variable to be output
-  */
-
+ * Debug Helper
+ *
+ * Outputs the given variable with formatting and location
+ */
 function dump()
 {
 	list($callee) = debug_backtrace();
@@ -29,12 +22,11 @@ function dump()
 	echo '<legend style="background:lightgrey; padding:5px;">'.$callee['file'].' @ line: '.$callee['line'].'</legend><pre>';
 
 	$i = 0;
-	foreach ($arguments as $argument)
-	{
+	foreach ($arguments as $argument) {
 		echo '<br/><strong>Debug #'.(++$i).' of '.$total_arguments.'</strong>: ';
 		var_dump($argument);
 	}
 
-	echo "</pre>";
-	echo "</fieldset>";
+	echo '</pre>';
+	echo '</fieldset>';
 }

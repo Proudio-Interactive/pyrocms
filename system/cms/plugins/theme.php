@@ -1,62 +1,404 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php defined('BASEPATH') or exit('No direct script access allowed');
+
 /**
  * Theme Plugin
  *
  * Load partials and access data
  *
- * @package		PyroCMS
- * @author		PyroCMS Dev Team
- * @copyright	Copyright (c) 2008 - 2011, PyroCMS
- *
+ * @author  PyroCMS Dev Team
+ * @package PyroCMS\Core\Plugins
  */
 class Plugin_Theme extends Plugin
 {
-	/**
-	 * Options
-	 *
-	 * Fetches a theme option
-	 *
-	 * Usage:
-	 * {pyro:theme:options option="layout"}
-	 *
-	 * @param	string
-	 */
-	function options()
-	{
-		$option = $this->pyrocache->model('themes_m', 'get_option', array( array('slug' => $this->attribute('option')) ));
 
-		return is_object($option) ? $option->value : NULL;
+	public $version = '1.1.0';
+	public $name = array(
+		'en' => 'Theme',
+	);
+	public $description = array(
+		'en' => 'Load and display theme assets.',
+		'el' => 'Φορτώνει και προβάλλει πόρους του θέματος εμφάνισης.',
+            'fa' => 'بارگزاری و نمایش asset های قالب ها',
+		'fr' => 'Permet de charger et d\'afficher les différentes ressources du thème.',
+		'it' => 'Carica e mostra gli asset del tema'
+	);
+
+	/**
+	 * Returns a PluginDoc array that PyroCMS uses
+	 * to build the reference in the admin panel
+	 *
+	 * All options are listed here but refer
+	 * to the Blog plugin for a larger example
+	 *
+	 * @todo fill the  array with details about this plugin, then uncomment the return value.
+	 *
+	 * @return array
+	 */
+	public function _self_doc()
+	{
+		$info = array(
+			'path' => array(// the name of the method you are documenting
+				'description' => array(// a single sentence to explain the purpose of this method
+					'en' => 'Outputs the path to the theme relative to the web root.'
+				),
+				'single' => true,// will it work as a single tag?
+				'double' => false,// how about as a double tag?
+				'variables' => '',// list all variables available inside the double tag. Separate them|like|this
+				'attributes' => array(),
+			),// end path method
+			'partial' => array(// the name of the method you are documenting
+				'description' => array(// a single sentence to explain the purpose of this method
+					'en' => 'Outputs a theme partial file at the location of this tag (usually in your layout file).'
+				),
+				'single' => true,// will it work as a single tag?
+				'double' => false,// how about as a double tag?
+				'variables' => '',// list all variables available inside the double tag. Separate them|like|this
+				'attributes' => array(
+					'name' => array(// this is the order-dir="asc" attribute
+						'type' => 'text',// Can be: slug, number, flag, text, array, any.
+						'flags' => '',// flags are predefined values like this.
+						'default' => '',// attribute defaults to this if no value is given
+						'is_required' => true,// is this attribute required?
+					),
+				),
+			),// end partial method
+			'variables' => array(
+				'description' => array(
+					'en' => 'Set and display temporary variables.'
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'name' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+					'value' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => false,
+					),
+				),
+			),// end variables method
+			'favicon' => array(
+				'description' => array(
+					'en' => 'Display a favicon for your site.'
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => 'favicon.ico',
+						'is_required' => false,
+					),
+					'rel' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => 'shortcut icon',
+						'is_required' => false,
+					),
+					'sizes' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => false,
+					),
+					'type' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => 'image/x-icon',
+						'is_required' => false,
+					),
+					'xhtml' => array(
+						'type' => 'flag',
+						'flags' => 'Y|N',
+						'default' => 'N',
+						'is_required' => false,
+					),
+				),
+			),// end favicon method
+			'lang' => array(
+				'description' => array(
+					'en' => 'Output a translated string from the language file specified by [lang]. Use [default] to output a fallback string.'
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'lang' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+					'line' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+					'default' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => false,
+					),
+				),
+			),// end lang method
+			'css' => array(
+				'description' => array(
+					'en' => 'Load a CSS file from the theme\'s css folder',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+					'title' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => false,
+					),
+					'media' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => false,
+					),
+					'type' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => 'text/css',
+						'is_required' => false,
+					),
+					'rel' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => 'stylesheet',
+						'is_required' => false,
+					),
+				),
+			),// end css method
+			'css_path' => array(
+				'description' => array(
+					'en' => 'Output the filesystem path to the specified CSS file.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end css_path method
+			'css_url' => array(
+				'description' => array(
+					'en' => 'Output the url to the specified CSS file.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end css_url method
+			'image' => array(
+				'description' => array(
+					'en' => 'Output a theme image from the theme\'s img folder. Extra attributes can be used to set the class or etc.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+					'alt' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => 'the file name',
+						'is_required' => false,
+					),
+					'any' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => false,
+					),
+				),
+			),// end image method
+			'image_path' => array(
+				'description' => array(
+					'en' => 'Output the filesystem path to the specified image file.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end image_path method
+			'image_url' => array(
+				'description' => array(
+					'en' => 'Output the url to the specified image file.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end image_url method
+			'js' => array(
+				'description' => array(
+					'en' => 'Include a JavaScript file from the theme\'s js folder',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end js method
+			'js_path' => array(
+				'description' => array(
+					'en' => 'Output the filesystem path to the specified js file.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end js_path method
+			'js_url' => array(
+				'description' => array(
+					'en' => 'Output the url to the specified js file.',
+				),
+				'single' => true,
+				'double' => false,
+				'variables' => '',
+				'attributes' => array(
+					'file' => array(
+						'type' => 'text',
+						'flags' => '',
+						'default' => '',
+						'is_required' => true,
+					),
+				),
+			),// end js_url method
+		);
+
+		return $info;
 	}
-	
+
 	/**
 	 * Partial
 	 *
 	 * Loads a theme partial
-	 * 
-	 * Usage:
-	 * {pyro:theme:partial file="header"}
 	 *
-	 * @param	array
-	 * @return	array
+	 * Usage:
+	 *
+	 *     {{ theme:partial name="header" any_random_data="foo" }}
+	 *
+	 * @return string The final rendered partial view.
 	 */
-	function partial()
+	public function partial()
 	{
-		$name = $this->attribute('name');
-		$name = $this->attribute('file', $name); #deprecated
+		$attributes = $this->attributes();
 
-		$data =& $this->load->_ci_cached_vars;
+		if (empty($attributes['name'])) {
+			throw new Exception('Attributes must have a name="" attribute.');
+		}
 
-		return $this->parser->parse_string($this->load->_ci_load(array(
-			'_ci_path' => $data['template_views'].'partials/'.$name.'.html',
-			'_ci_return' => TRUE
-		)), $data, TRUE, TRUE);
+		$name = $attributes['name'];
+		unset($attributes['name']);
+
+		$path = $this->load->get_var('template_views');
+		$data = array_merge($this->load->get_vars(), $attributes);
+
+		$string = $this->load->file($path . 'partials/' . $name . '.html', true);
+
+		return $this->parser->parse_string($string, $data, true, true);
 	}
 
-	function path()
+	/**
+	 * Path
+	 *
+	 * Get the path to the theme
+	 *
+	 * Usage:
+	 *
+	 *     {{ theme:assets }}
+	 *
+	 * @return string The rendered assets (CSS/Js) for the theme.
+	 */
+	public function assets()
 	{
-		$data =& $this->load->_ci_cached_vars;
-		$path = rtrim($data['template_views'], '/');
-		return preg_replace('#(\/views(\/web|\/mobile)?)$#', '', $path).'/';
+		return Asset::render('theme');
+	}
+
+	/**
+	 * Path
+	 *
+	 * Get the path to the theme
+	 *
+	 * Usage:
+	 *
+	 *     {{ theme:path }}
+	 *
+	 * @return string The path to the theme (relative to web root).
+	 */
+	public function path()
+	{
+		$path = rtrim($this->load->get_var('template_views'), '/');
+
+		return preg_replace('#(\/views(\/web|\/mobile)?)$#', '', $path) . '/';
 	}
 
 	/**
@@ -66,39 +408,19 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:css file=""}
+	 *     {{ theme:css file="" }}
 	 *
-	 * @param	array
-	 * @return	array
+	 * @return string The link HTML tag for the stylesheets.
 	 */
-	function css($return = '')
+	public function css()
 	{
-		$this->load->library('asset');
-		
-		$file		= $this->attribute('file');
-		$attributes	= $this->attributes();
-		$module		= $this->attribute('module', '_theme_');
-		$method		= 'css' . (in_array($return, array('url', 'path')) ? '_' . $return : ($return = ''));
-		$base		= $this->attribute('base', '');
+		$file  = $this->attribute('file');
+		$title = $this->attribute('title', ''); // CodeIgniter stupidly checks for '' not empty
+		$media = $this->attribute('media', ''); // CodeIgniter stupidly checks for '' not empty
+		$type  = $this->attribute('type', 'text/css');
+		$rel   = $this->attribute('rel', 'stylesheet');
 
-		foreach (array('file', 'module', 'base') as $key)
-		{
-			if (isset($attributes[$key]))
-			{
-				unset($attributes[$key]);
-			}
-			else if ($key === 'file')
-			{
-				return '';
-			}
-		}
-
-		if ( ! $return)
-		{
-			return $this->asset->{$method}($file, $module, $attributes, $base);
-		}
-
-		return $this->asset->{$method}($file, $module, $attributes);
+		return link_tag($this->css_url($file), $rel, $type, $title, $media);
 	}
 
 	/**
@@ -106,29 +428,30 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:css_url file=""}
+	 *     {{ theme:css_url file="" }}
 	 *
-	 * @param	array
-	 * @return	string The css location url
+	 * @return string The CSS URL
 	 */
-	function css_url()
+	public function css_url()
 	{
-		return $this->css('url');
+		$file = $this->attribute('file');
+
+		return Asset::get_filepath_css($file, true);
 	}
 
 	/**
 	 * Theme CSS PATH
 	 *
 	 * Usage:
+	 *   {{ theme:css_path file="" }}
 	 *
-	 * {pyro:theme:css_path file=""}
-	 *
-	 * @param	array
-	 * @return	string The css location path
+	 * @return string The CSS location path
 	 */
-	function css_path()
+	public function css_path()
 	{
-		return $this->css('path');
+		$file = $this->attribute('file');
+
+		return Asset::get_filepath_css($file, false);
 	}
 
 	/**
@@ -138,39 +461,29 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:image file=""}
+	 *     {{ theme:image file="" }}
 	 *
-	 * @param	array
-	 * @return	array
+	 * @return string An empty string or the image tag.
 	 */
-	function image($return = '')
+	public function image()
 	{
-		$this->load->library('asset');
+		$file       = $this->attribute('file');
+		$alt        = $this->attribute('alt', $file);
+		$attributes = $this->attributes();
 
-		$file		= $this->attribute('file');
-		$attributes	= $this->attributes();
-		$module		= $this->attribute('module', '_theme_');
-		$method		= 'image' . (in_array($return, array('url', 'path')) ? '_' . $return : ($return = ''));
-		$base		= $this->attribute('base', '');
-
-		foreach (array('file', 'module', 'base') as $key)
-		{
-			if (isset($attributes[$key]))
-			{
+		foreach (array('file', 'alt') as $key) {
+			if (isset($attributes[$key])) {
 				unset($attributes[$key]);
-			}
-			else if ($key === 'file')
-			{
+			} elseif ($key == 'file') {
 				return '';
 			}
 		}
 
-		if ( ! $return)
-		{
-			return $this->asset->{$method}($file, $module, $attributes, $base);
+		try {
+			return Asset::img($file, $alt, $attributes);
+		} catch (Asset_Exception $e) {
+			return '';
 		}
-
-		return $this->asset->{$method}($file, $module, $attributes);
 	}
 
 	/**
@@ -178,14 +491,15 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:image_url file=""}
+	 *     {{ theme:image_url file="" }}
 	 *
-	 * @param	array
-	 * @return	string The image location url
+	 * @return string The image URL
 	 */
-	function image_url()
+	public function image_url()
 	{
-		return $this->image('url');
+		$file = $this->attribute('file');
+
+		return Asset::get_filepath_img($file, true);
 	}
 
 	/**
@@ -193,14 +507,15 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:image_path file=""}
+	 *     {{ theme:image_path file="" }}
 	 *
-	 * @param	array
-	 * @return	string The image location path
+	 * @return string The image location path
 	 */
-	function image_path()
+	public function image_path()
 	{
-		return $this->image('path');
+		$file = $this->attribute('file');
+
+		return BASE_URI . Asset::get_filepath_img($file, false);
 	}
 
 	/**
@@ -210,26 +525,17 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:js file=""}
+	 *     {{ theme:js file="" }}
 	 *
-	 * @param	array
-	 * @return	array
+	 * @param string $return Not used
+	 *
+	 * @return string An empty string or the script tag.
 	 */
-	function js($return = '')
+	public function js($return = '')
 	{
-		$this->load->library('asset');
+		$file = $this->attribute('file');
 
-		$file	= $this->attribute('file');
-		$module	= $this->attribute('module', '_theme_');
-		$method	= 'js' . (in_array($return, array('url', 'path')) ? '_' . $return : ($return = ''));
-		$base	= $this->attribute('base', '');
-
-		if ( ! $return)
-		{
-			return $this->asset->{$method}($file, $module, $base);
-		}
-
-		return $this->asset->{$method}($file, $module);
+		return '<script src="' . $this->js_url($file) . '" type="text/javascript"></script>';
 	}
 
 	/**
@@ -237,55 +543,54 @@ class Plugin_Theme extends Plugin
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:js_url file=""}
+	 *     {{ theme:js_url file="" }}
 	 *
-	 * @param	array
-	 * @return	string The js location url
+	 * @return string The javascript asset URL.
 	 */
-	function js_url()
+	public function js_url()
 	{
-		return $this->js('url');
-	}
+		$file = $this->attribute('file');
 
+		return Asset::get_filepath_js($file, true);
+	}
 
 	/**
 	 * Theme JS PATH
 	 *
 	 * Usage:
 	 *
-	 * {pyro:theme:js_path file=""}
+	 *     {{ theme:js_path file="" }}
 	 *
-	 * @param	array
-	 * @return	string The js location path
+	 * @return string The javascript asset location path.
 	 */
-	function js_path()
+	public function js_path()
 	{
-		return $this->js('path');
+		$file = $this->attribute('file');
+
+		return BASE_URI . Asset::get_filepath_js($file, false);
 	}
 
 	/**
-	 *
 	 * Set and get theme variables
 	 *
 	 * Usage:
-	 * {pyro:theme:variables name="foo"}
 	 *
-	 * @param	array
-	 * @return	array
+	 *     {{ theme:variables name="foo" }}
+	 *
+	 * @return string The variable value.
 	 */
 	public function variables()
 	{
-		if ( ! isset($variables))
-		{
+		if (!isset($variables)) {
 			static $variables = array();
 		}
 
-		$name	= $this->attribute('name');
-		$value	= $this->attribute('value');
+		$name = $this->attribute('name');
+		$value = $this->attribute('value');
 
-		if ($value !== NULL)
-		{
+		if ($value !== null) {
 			$variables[$name] = $value;
+
 			return;
 		}
 
@@ -296,41 +601,67 @@ class Plugin_Theme extends Plugin
 	 * Theme Favicon
 	 *
 	 * Insert a link tag for favicon from your theme
-	 *
+     *
+     * Specs:
+     *
+     *     http://www.w3.org/TR/html5/links.html#rel-icon
+     *
 	 * Usage:
 	 *
-	 * {pyro:theme:favicon file="" [rel="foo"] [type="bar"]}
+	 *     {{ theme:favicon file="" [rel="foo"] [type="bar"] [sizes="16x16 72x72 …"] }}
 	 *
-	 * @param	array
-	 * @return	array
+	 * @return string The link HTML tag for the favicon.
 	 */
 	public function favicon()
 	{
-		$base = $this->attribute('base', 'path');
+		$this->load->library('asset');
+		$file = Asset::get_filepath_img($this->attribute('file', 'favicon.ico'), true);
 
-		if ($base === 'path')
-		{
-			$theme_path = $this->template->get_theme_path();
-			$file = BASE_URI . $theme_path . $this->attribute('file', 'favicon.ico');
-		}
-		elseif ($base === 'url')
-		{
-			$this->load->library('asset');
-			$file = $this->asset->image_url($this->attribute('file', 'favicon.ico'), '_theme_');
-		}
-
-		$rel		= $this->attribute('rel', 'shortcut icon');
-		$type		= $this->attribute('type', 'image/x-icon');
-		$is_xhtml	= in_array($this->attribute('xhtml', 'true'), array('1','y','yes','true'));
+		$rel      = $this->attribute('rel', 'shortcut icon');
+		$sizes    = $this->attribute('sizes', '');
+		$type     = $this->attribute('type', 'image/x-icon');
+		$is_xhtml = str_to_bool($this->attribute('xhtml', true));
 
 		$link = '<link ';
 		$link .= 'href="' . $file . '" ';
 		$link .= 'rel="' . $rel . '" ';
+		$link .= $sizes ? 'sizes="' . $sizes . '" ' : '';
 		$link .= 'type="' . $type . '" ';
 		$link .= ($is_xhtml ? '/' : '') . '>';
 
 		return $link;
 	}
-}
 
-/* End of file theme.php */
+	/**
+	 * Theme Language line
+	 *
+	 * Fetch a single line of text from the language array
+	 *
+	 * Usage:
+	 *
+	 *     {{ theme:lang lang="theme" line="theme_title" [default="PyroCMS"] }}
+	 *
+	 * @return string.
+	 */
+	public function lang()
+	{
+		$lang_file = $this->attribute('lang');
+		$line      = $this->attribute('line');
+		$default   = $this->attribute('default');
+		// Return an empty string as the attribute LINE is missing
+		if ( ! isset($line)) {
+			return "";
+		}
+
+		$deft_lang = CI::$APP->config->item('language');
+		if ($lang = Modules::load_file($lang_file . '_lang', CI::$APP->template->get_theme_path() . '/language/' . $deft_lang . '/', 'lang')) {
+			CI::$APP->lang->language = array_merge(CI::$APP->lang->language, $lang);
+			CI::$APP->lang->is_loaded[] = $lang_file . '_lang' . EXT;
+			unset($lang);
+		}
+		$value = $this->lang->line($line);
+
+		return $value ? $value : $default;
+	}
+
+}

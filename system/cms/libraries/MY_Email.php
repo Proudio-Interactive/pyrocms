@@ -1,57 +1,52 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 /**
- * MY_Email - Allows for email config settings to be stored in the db.
- * 
- * @author      Stephen Cozart - PyroCMS dev team
- * @package 	PyroCMS
- * @subpackage  library
- * @category	email   
+ * MY_Email
+ * Allows for email config settings to be stored in the db.
+ *
+ * @package 	PyroCMS\Core\Libraries
+ * @author      PyroCMS Dev Team
+ * @copyright   Copyright (c) 2012, PyroCMS LLC
  */
-class MY_Email extends CI_Email {
-    
+class MY_Email extends CI_Email
+{
     /**
      * Constructor method
      *
-     * @access public
      * @return void
      */
-    function __construct($config = array())
+    public function __construct($config = array())
     {
         parent::__construct($config);
-        
+
         //set mail protocol
         $config['protocol'] = Settings::get('mail_protocol');
-        
+
         //set a few config items (duh)
-        $config['mailtype']	= 'html';
-        $config['charset']	= 'utf-8';
-        $config['crlf']		= '\r\n';
-        $config['newline']	= '\r\n';
-        
+        $config['mailtype']	= "html";
+        $config['charset']	= "utf-8";
+        $config['crlf']		= Settings::get('mail_line_endings') ? "\r\n" : PHP_EOL;
+        $config['newline']	= Settings::get('mail_line_endings') ? "\r\n" : PHP_EOL;
+
         //sendmail options
-        if (Settings::get('mail_protocol') == 'sendmail')
-        {
-                if(Settings::get('mail_sendmail_path') == '')
-                {
+        if (Settings::get('mail_protocol') == 'sendmail') {
+                if (Settings::get('mail_sendmail_path') == '') {
                         //set a default
                         $config['mailpath'] = '/usr/sbin/sendmail';
-                }
-                else
-                {
+                } else {
                         $config['mailpath'] = Settings::get('mail_sendmail_path');
                 }
         }
-        
+
         //smtp options
-        if (Settings::get('mail_protocol') == 'smtp')
-        {
-                $config['smtp_host'] = Settings::get('mail_smtp_host');
-                $config['smtp_user'] = Settings::get('mail_smtp_user');
-                $config['smtp_pass'] = Settings::get('mail_smtp_pass');
-                $config['smtp_port'] = Settings::get('mail_smtp_port');
+        if (Settings::get('mail_protocol') == 'smtp') {
+            $config['smtp_host'] = Settings::get('mail_smtp_host');
+            $config['smtp_user'] = Settings::get('mail_smtp_user');
+            $config['smtp_pass'] = Settings::get('mail_smtp_pass');
+            $config['smtp_port'] = Settings::get('mail_smtp_port');
+            $config['smtp_crypto'] = Settings::get('mail_smtp_crypto');
         }
-        
+
         $this->initialize($config);
-    }    
+    }
 }
 /* End of file MY_Email.php */

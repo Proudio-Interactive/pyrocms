@@ -1,12 +1,9 @@
-<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 
 // labels
-$lang['header']			=	'4ª Etapa: Criação do Banco de Dados';
-$lang['intro_text']		=	'Complete o formulário abaixo e clique no botão "Instalar" para instalar o PyroCMS. Certifique-se que você está instalando o PyroCMS no banco de dados correto, pois todos os dados existentes nele serão perdidos!';
+$lang['header']			=	'4ª Etapa: Criação do Banco de Dados'; #translate
+$lang['intro_text']		=	'Complete o formulário abaixo e clique no botão "Instalar" para instalar o PyroCMS. Certifique-se que você está instalando o PyroCMS no banco de dados correto, pois todos os dados existentes nele serão perdidos!'; #translate
 
-$lang['db_settings']	=	'Configuração do banco de dados';
-$lang['db_create']		=	'Criar banco de dados';
-$lang['db_notice']		=	'Você talvez precise fazer isto manualmente';
 $lang['default_user']	=	'Usuário padrão do PyroCMS';
 $lang['database']		=	'Banco de dados';
 $lang['site_settings']	= 	'Configurações do site';
@@ -19,6 +16,7 @@ $lang['password']		= 	'Senha';
 $lang['conf_password']	=	'Confirme a senha';
 $lang['finish']			=	'Concluír a instalação';
 
+$lang['invalid_db_name'] = 'The database name you entered is invalid. Please use only alphanumeric characters and underscores.'; #translate
 $lang['error_101']		=	'O banco de dados não pode ser criado. Isto pode ter falhado se você marcou para criar o banco de dados e não possui permissões suficientes.';
 $lang['error_102']		=	'O instalador não conseguiu adicionar as tabelas ao banco de dados.<br/><br/>';
 $lang['error_103']		=	'O instalador não conseguiu inserir os dados no banco de dados.<br/><br/>';

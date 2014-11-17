@@ -1,10 +1,11 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 
 // labels
 $lang['congrats']			= 'Congratulazioni';
 $lang['intro_text']			= 'PyroCMS è stato installato ed è pronot! Per favore entra nel pannello di controllo con i seguenti parametri.';
 $lang['email']				= 'E-mail';
 $lang['password']			= 'Password';
+$lang['show_password']		= 'Mostrare password?';
 $lang['outro_text']			= 'Ed infine, <strong>elimina la cartella installer dal tuo server</strong> perchè se lasciata al suo posto può permettere l\'hackeraggio del tuo sito.';
 
 $lang['go_website']			= 'Vai al sito';

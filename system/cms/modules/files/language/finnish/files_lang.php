@@ -1,94 +1,109 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * Finnish translation.
- * 
- * @author Mikael Kundert <mikael@kundert.fi>
- * @date 07.02.2011
- * @version 1.0.3
- */
+// General
+$lang['files:files_title']					= 'Tiedostot';
+$lang['files:fetching']						= 'Vastaanotetaan dataa...';
+$lang['files:fetch_completed']				= 'Valmis';
+$lang['files:save_failed']					= 'Pahoittelut. Muutoksia ei voitu tallentaa';
+$lang['files:item_created']					= '"%s" luotiin';
+$lang['files:item_updated']					= '"%s" päivitettiin';
+$lang['files:item_deleted']					= '"%s" poistettiin';
+$lang['files:item_not_deleted']				= '"%s" ei voitu poistaa';
+$lang['files:item_not_found']				= 'Pahoittelut. "%s" ei löytynyt';
+$lang['files:sort_saved']					= 'Järjestys tallennettu';
+$lang['files:no_permissions']				= 'Sinulla ei ole tarpeeksi oikeuksia';
+
+// Labels
+$lang['files:activity']						= 'Activity'; # translate
+$lang['files:places']						= 'Paikat';
+$lang['files:back']							= 'Takaisin';
+$lang['files:forward']						= 'Eteenpäin';
+$lang['files:start']						= 'Aloita lataus';
+$lang['files:details']						= 'Tiedot';
+$lang['files:id']							= 'ID';
+$lang['files:name']							= 'Nimi';
+$lang['files:slug']							= 'Polkutunnus';
+$lang['files:path']							= 'Polku';
+$lang['files:added']						= 'Lisätty';
+$lang['files:width']						= 'Leveys';
+$lang['files:height']						= 'Korkeus';
+$lang['files:ratio']						= 'Suhde';
+$lang['files:alt_attribute']				= 'Alt attribuutti';
+$lang['files:full_size']					= 'Täysi koko';
+$lang['files:filename']						= 'Tiedostonimi';
+$lang['files:filesize']						= 'Tiedostokoko';
+$lang['files:download_count']				= 'Ladattu kpl';
+$lang['files:download']						= 'Lataa';
+$lang['files:location']						= 'Sijainti';
+$lang['files:keywords']						= 'Avainsanat';
+$lang['files:toggle_data_display']			= 'Näytä/piilota tiedot';
+$lang['files:description']					= 'Kuvaus';
+$lang['files:container']					= 'Container'; # translate
+$lang['files:bucket']						= 'Bucket'; # translate
+$lang['files:check_container']				= 'Tarkista oikeellisuus';
+$lang['files:search_message']				= 'Kirjoita hakusana';
+$lang['files:search']						= 'Etsi';
+$lang['files:synchronize']					= 'Synkronisoi';
+$lang['files:uploader']						= 'Vedä tiedostot tähän <br />tai<br />Klikkaa valitaksesi tiedostot';
+$lang['files:replace_file']					= 'Korvaa tiedosto';
+
+// Context Menu
+$lang['files:refresh']						= 'Päivitä';
+$lang['files:open']							= 'Avaa';
+$lang['files:new_folder']					= 'Uusi kansio';
+$lang['files:upload']						= 'Siirrä tiedosto palvelimelle';
+$lang['files:rename']						= 'Nimeä uudelleen';
+$lang['files:replace']						= 'Korvaa';
+$lang['files:delete']						= 'Poista';
+$lang['files:edit']							= 'Muokkaa';
+$lang['files:details']						= 'Tiedot';
+
+// Folders
+
+$lang['files:no_folders']					= 'Tiedostoja ja kansioita hallinoidaan kuten työpöydälläkin. Klikkaa oikealla hiiren napilla alhaalta lisätäksesi kansioita. Sitten klikkaa oikealla hiiren napilla nimetäksesi uudelleen, poistaa, siirtää palvelimelle tiedostoja tai muuttaa sen tietoja.';
+$lang['files:no_folders_places']			= 'Kansiot ilmestyvät tähän. Voit avata ja sulkea kansipuuta. Klikkaa "Paikat" valitaksesi juurikansion.';
+$lang['files:no_folders_wysiwyg']			= 'Kansioita ei luotu vielä';
+$lang['files:new_folder_name']				= 'Nimetön kansio';
+$lang['files:folder']						= 'Kansio';
+$lang['files:folders']						= 'Kansiot';
+$lang['files:select_folder']				= 'Valitse kansio';
+$lang['files:subfolders']					= 'Alakansiot';
+$lang['files:root']							= 'Juuri';
+$lang['files:no_subfolders']				= 'Ei alakansioita';
+$lang['files:folder_not_empty']				= 'Sinun tulee poistaa kansion "%s" sisältö ensin';
+$lang['files:mkdir_error']					= 'Kansiota %s ei voitu luoda. Sinun tulee lisätä se manuaalisesti';
+$lang['files:chmod_error']					= 'Palvelimen kansioon ei voida kirjoittaa. Sen tulee olla 0777';
+$lang['files:location_saved']				= 'Kansion sijainti on tallennettu';
+$lang['files:container_exists']				= '"%s" exists. Save to link its contents to this folder';  # translate
+$lang['files:container_not_exists']			= '"%s" does not exist in your account. Save and we will try to create it';  # translate
+$lang['files:error_container']				= '"%s" could not be created and we could not determine the reason';  # translate
+$lang['files:container_created']			= '"%s" has been created and is now linked to this folder';  # translate
+$lang['files:unwritable']					= '"%s":n ei voida kirjoittaa, aseta sille 0777 oikeudet';
+$lang['files:specify_valid_folder']			= 'Sinun tulee määrittää kelpo kansio, jotta voit siirtää siihen tiedostoja';
+$lang['files:enable_cdn']					= 'Sinun tulee laittaa CDN päälle "%s" varten Rackspace hallintapaneelista ennen kuin voit synkronisoida';
+$lang['files:synchronization_started']		= 'Aloitetaan synkronisointi';
+$lang['files:synchronization_complete']		= 'Synkronisointi "%s" on valmis';
+$lang['files:untitled_folder']				= 'Nimetön kansio';
 
 // Files
-
-// Titles
-$lang['files.files_title']					= 'Tiedostot';
-$lang['files.upload_title']					= 'Lähetä tiedostoja';
-$lang['files.edit_title']					= 'Muokkaa tiedostoa "%s"';
-
-// Labels
-$lang['files.actions_label']				= 'Toiminto';
-$lang['files.download_label']				= 'Lataa';
-$lang['files.edit_label']					= 'Muokkaa';
-$lang['files.delete_label']					= 'Poista';
-$lang['files.upload_label']					= 'Lähetä tiedosto';
-$lang['files.description_label']			= 'Kuvaus';
-$lang['files.type_label']					= 'Tyyppi';
-$lang['files.file_label']					= 'Tiedosto';
-$lang['files.filename_label']				= 'Tiedostonimi';
-$lang['files.filter_label']					= 'Suodata';
-$lang['files.loading_label']				= 'Ladataan...';
-$lang['files.name_label']					= 'Nimi';
-
-$lang['files.dropdown_no_subfolders']		= '-- Ei mikään --';
-$lang['files.dropdown_root']				= '-- Juuri --';
-
-$lang['files.type_a']						= 'Ääni';
-$lang['files.type_v']						= 'Video';
-$lang['files.type_d']						= 'Dokumentti';
-$lang['files.type_i']						= 'Kuva';
-$lang['files.type_o']						= 'Muu';
-
-$lang['files.display_grid']					= 'Ruudukko';
-$lang['files.display_list']					= 'Lista';
-
-// Messages
-$lang['files.create_success']				= 'Tiedosto tallennettiin.';
-$lang['files.create_error']					= 'Tapahtui virhe.';
-$lang['files.edit_success']					= 'Tiedosto tallennettiin onnistuneesti.';
-$lang['files.edit_error']					= 'Tiedostoa tallennetaessa tapahtui virhe.';
-$lang['files.delete_success']				= 'Tiedosto poistettiin.';
-$lang['files.delete_error']					= 'Tiedostoa ei voitu poistaa.';
-$lang['files.mass_delete_success']			= '%d/%d tiedostoa poistettiin onnistuneesti, ne olivat "%s ja %s"';
-$lang['files.mass_delete_error']			= 'Tapahtui virhe poistaessa %d/%d tiedostoa, ne olivat "%s ja %s".';
-$lang['files.upload_error']					= 'Tiedoston lataaminen on pakollinen.';
-$lang['files.invalid_extension']			= 'Tiedostomuoto ei kelpaa.';
-$lang['files.not_exists']					= 'Ei voitu valita tiedostoa (ei ole olemassa).';
-$lang['files.no_files']						= 'Ei tiedostoja tällä hetkellä.';
-$lang['files.no_permissions']				= 'Sinulla ei ole käyttöoikeuksia hallinnoida moduulia.';
-$lang['files.no_select_error'] 				= 'Sinun tulee ensin valita tiedosto, pyyntö keskeytettiin.';
-
-// File folders
-
-// Titles
-$lang['file_folders.folders_title']			= 'Kansiot';
-$lang['file_folders.manage_title']			= 'Hallitse kansioita';
-$lang['file_folders.create_title']			= 'Uusi kansio';
-$lang['file_folders.delete_title']			= 'Vahvista poistaminen';
-$lang['file_folders.edit_title']			= 'Muokkaa kansiota "%s"';
-
-// Labels
-$lang['file_folders.folders_label']			= 'Kansiot';
-$lang['file_folders.folder_label']			= 'Kansio';
-$lang['file_folders.subfolders_label']		= 'Alakansio';
-$lang['file_folders.parent_label']			= 'Yläkohta';
-$lang['file_folders.name_label']			= 'Nimi';
-$lang['file_folders.slug_label']			= 'Polkutunnus';
-$lang['file_folders.created_label']			= 'Luotu';
-
-// Messages
-$lang['file_folders.create_success']		= 'Kansio tallennettiin.';
-$lang['file_folders.create_error']			= 'Kansiota luodessa tapahtui virhe.';
-$lang['file_folders.edit_success']			= 'Tiedosto tallennettiin onnistuneesti.';
-$lang['file_folders.edit_error']			= 'Muutoksia tallennettaessa tapahtui virhe.';
-$lang['file_folders.confirm_delete']		= 'Oletko varma, että haluat poistaa alla olevan kansion? Kaikki sen sisällä olevat tiedostot ja kansiot poistetaan myös.';
-$lang['file_folders.delete_mass_success']	= '%d/%d kansiota poistettiin onnistuneesti, ne olivat "%s ja %s.';
-$lang['file_folders.delete_mass_error']		= '%d/%d kansioita poistaessa tapahtui virhe, ne olivat "%s ja %s".';
-$lang['file_folders.delete_success']		= 'Kansio "%s" poistettiin.';
-$lang['file_folders.delete_error']			= 'Kansion "%s" poistaessa tapahtui virhe.';
-$lang['file_folders.not_exists']			= 'Ei voitu valita kansiota (ei ole olemassa).';
-$lang['file_folders.no_subfolders']			= 'Ei yhtään';
-$lang['file_folders.no_folders']			= 'Tiedostot listataan kansioittain. Tällä hetkellä kansioita ei ole luotu.';
-$lang['file_folders.mkdir_error']			= 'Ei voitu luoda uploads/files kansiota';
-$lang['file_folders.chmod_error']			= 'Ei voitu määrittää käyttöoikeuksia uploads/files kansioon';
+$lang['files:no_files']						= 'Ei tiedostoja';
+$lang['files:file_uploaded']				= '"%s" on siiretty palvelimelle';
+$lang['files:unsuccessful_fetch']			= '"%s" ei voitu hakea. Oletko varma, että se on julkinen tiedosto?';
+$lang['files:invalid_container']			= '"%s" does not appear to be a valid container.'; # translate
+$lang['files:no_records_found']				= 'Ei merkintöjä';
+$lang['files:invalid_extension']			= '"%s" tiedostopääte ei kelpaa';
+$lang['files:upload_error']					= 'Tiedoston siirtäminen palvelimelle epäonnistui';
+$lang['files:description_saved']			= 'Tiedoston tiedot on tallennettu';
+$lang['files:alt_saved']					= 'Kuvan ALT attribuutti on tallennettu';
+$lang['files:file_moved']					= '"%s" siirettiin onnistuneesti';
+$lang['files:exceeds_server_setting']		= 'Palvelin ei voi käsitellä näin isoa tiedostoa';
+$lang['files:exceeds_allowed']				= 'Tiedosto ylittää tiedostokoko rajoitukset';
+$lang['files:file_type_not_allowed']		= 'Tämän tyyppinen tiedosto ei ole sallittu';
+$lang['files:replace_warning']				= 'Varoitus: Älä korvaa tiedostoa toisella tyypillä (esim. .jpg tiedosto .png:llä)';
+$lang['files:type_a']						= 'Audio';
+$lang['files:type_v']						= 'Video';
+$lang['files:type_d']						= 'Dokumentti';
+$lang['files:type_i']						= 'Kuva';
+$lang['files:type_o']						= 'Muu';
 
 /* End of file files_lang.php */

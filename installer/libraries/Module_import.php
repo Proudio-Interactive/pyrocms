@@ -1,215 +1,256 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php
 
-define('PYROPATH', dirname(FCPATH).'/system/cms/');
-define('ADDONPATH', dirname(FCPATH).'/addons/default/');
-define('SHARED_ADDONPATH', dirname(FCPATH).'/addons/shared_addons/');
+use Composer\Autoload\ClassLoader;
+use Pyro\Module\Streams\FieldType\FieldTypeManager;
 
-// All modules talk to the Module class, best get that!
-include PYROPATH .'libraries/Module'.EXT;
+include PYROPATH.'core/MY_Model.php';
 
-class Module_import {
+class Module_import
+{
+    public function __construct(array $params)
+    {
+        ci()->pdb = $this->pdb = $params['pdb'];
 
-	private $ci;
+        // Make sure folders exist for addon structure
+        $this->buildFolderStructure(ADDONPATH, dirname(FCPATH));
 
-	public function __construct()
-	{
-		$this->ci =& get_instance();
-		$db['hostname'] = $this->ci->session->userdata('hostname');
-		$db['username'] = $this->ci->session->userdata('username');
-		$db['password'] = $this->ci->session->userdata('password');
-		$db['database'] = $this->ci->input->post('database');
-		$db['port'] = $this->ci->input->post('port');
-		$db['dbdriver'] = "mysql";
-		$db['dbprefix'] = 'default_';
-		$db['pconnect'] = TRUE;
-		$db['db_debug'] = TRUE;
-		$db['cache_on'] = FALSE;
-		$db['cachedir'] = "";
-		$db['char_set'] = "utf8";
-		$db['dbcollat'] = "utf8_unicode_ci";
+        // Lets PSR-0 up our modules
+        $this->registerAutoloader(new ClassLoader, realpath(PYROPATH), true);
+    }
 
-		$this->ci->load->database($db);
-		$this->ci->load->helper('file');
+    /**
+     * Build folder structure
+     * Creates folders if they are missing for modules, themes, widgets, etc
+     *
+     * @param string $app_path The location of the PyroCMS application folder
+     * @param string $base_path The location of the root of the PyroCMS installation
+     */
+    public function buildFolderStructure($app_path, $base_path)
+    {
+        // create the site specific addon folder
+        is_dir($app_path.'modules') or mkdir($app_path.'modules', DIR_READ_MODE, true);
+        is_dir($app_path.'themes') or mkdir($app_path.'themes', DIR_READ_MODE, true);
+        is_dir($app_path.'widgets') or mkdir($app_path.'widgets', DIR_READ_MODE, true);
+        is_dir($app_path.'field_types') or mkdir($app_path.'field_types', DIR_READ_MODE, true);
 
-		// create the site specific addon folder
-		is_dir(ADDONPATH.'modules') OR mkdir(ADDONPATH.'modules', DIR_READ_MODE, TRUE);
-		is_dir(ADDONPATH.'themes') OR mkdir(ADDONPATH.'themes', DIR_READ_MODE, TRUE);
-		is_dir(ADDONPATH.'widgets') OR mkdir(ADDONPATH.'widgets', DIR_READ_MODE, TRUE);
+        // create the site specific upload folder
+        if ( ! is_dir($base_path.'/uploads/default')) {
+            mkdir($base_path.'/uploads/default', DIR_WRITE_MODE, true);
+        }
+    }
 
-		// create the site specific upload folder
-		is_dir(dirname(FCPATH).'/uploads/default') OR mkdir(dirname(FCPATH).'/uploads/default', DIR_WRITE_MODE, TRUE);
+    /**
+     * Register Autoloader
+     *
+     * @param Composer\Autoload\ClassLoader $loader Instance of the Composer autoloader
+     * @param string $app_path The location of the PyroCMS application folder
+     *
+     * @return Composer\Autoload\ClassLoader
+     */
+    public function registerAutoloader(ClassLoader $loader, $app_path, $is_core = false)
+    {
+        $loader->add('Pyro\\Module\\Addons', $app_path.'/modules/addons/src/');
+        $loader->add('Pyro\\Module\\Streams_core', $app_path.'/modules/streams_core/src/');
+        $loader->add('Pyro\\Module\\Streams', $app_path.'/modules/streams_core/src/');
 
-		//insert empty html files
-		write_file(ADDONPATH.'modules/index.html','');
-		write_file(ADDONPATH.'themes/index.html','');
-		write_file(ADDONPATH.'widgets/index.html','');
-		write_file(PYROPATH.'uploads/index.html','');
-	}
+        $slugs = array();
 
+        // Go through EVERY module and register its src folder
+        foreach (glob("{$app_path}/modules/*/src/", GLOB_ONLYDIR) as $dir) {
 
-	/**
-	 * Install
-	 *
-	 * Installs a module
-	 *
-	 * @param	string	$slug	The module slug
-	 * @return	bool
-	 */
-	public function install($slug, $is_core = FALSE)
-	{
-		$details_class = $this->_spawn_class($slug, $is_core);
+            // Turn 'modules/blog/src/' into 'blog'
+            $slugs[] = $slug = basename(dirname($dir));
 
-		// Get some basic info
-		$module = $details_class->info();
+            // That 'blog' should now be 'Pyro\Module\Blog'
+            $namespace = 'Pyro\\Module\\'.ucfirst($slug);
 
-		// Now lets set some details ourselves
-		$module['version'] = $details_class->version;
-		$module['is_core'] = $is_core;
-		$module['enabled'] = TRUE;
-		$module['installed'] = TRUE;
-		$module['slug'] = $slug;
+            $loader->add($namespace, $dir);
+        }
 
-		// set the site_ref and upload_path for third-party devs
-		$details_class->site_ref 	= 'default';
-		$details_class->upload_path	= 'uploads/default/';
+        // activate the autoloader
+        $loader->register();
 
-		// Run the install method to get it into the database
-		if ( ! $details_class->install())
-		{
-			return FALSE;
-		}
+        foreach ($slugs as $slug) {
 
-		// Looks like it installed ok, add a record
-		return $this->add($module);
-	}
+            if ($details_class = $this->spawnClass($slug, $is_core)) {
 
-	public function add($module)
-	{
-		return $this->ci->db->insert('modules', array(
-			'name' => serialize($module['name']),
-			'slug' => $module['slug'],
-			'version' => $module['version'],
-			'description' => serialize($module['description']),
-			'skip_xss' => !empty($module['skip_xss']),
-			'is_frontend' => !empty($module['frontend']),
-			'is_backend' => !empty($module['backend']),
-			'menu' => !empty($module['menu']) ? $module['menu'] : FALSE,
-			'enabled' => $module['enabled'],
-			'installed' => $module['installed'],
-			'is_core' => $module['is_core']
-		));
-	}
+                $module_info = $details_class->info();
 
+                $field_types = isset($module_info['field_types']) ? $module_info['field_types'] : false;
 
-	public function import_all()
-	{
-		//drop the old modules table
-		$this->ci->load->dbforge();
-		$this->ci->dbforge->drop_table('modules');
+                FieldTypeManager::registerFolderFieldTypes("{$app_path}/modules/{$slug}/field_types/", $field_types);
+            }
+        }
 
-		$modules = "
-			CREATE TABLE IF NOT EXISTS ".$this->ci->db->dbprefix('modules')." (
-			  `id` int(11) NOT NULL AUTO_INCREMENT,
-			  `name` TEXT NOT NULL,
-			  `slug` varchar(50) NOT NULL,
-			  `version` varchar(20) NOT NULL,
-			  `type` varchar(20) DEFAULT NULL,
-			  `description` TEXT DEFAULT NULL,
-			  `skip_xss` tinyint(1) NOT NULL,
-			  `is_frontend` tinyint(1) NOT NULL,
-			  `is_backend` tinyint(1) NOT NULL,
-			  `menu` varchar(20) NOT NULL,
-			  `enabled` tinyint(1) NOT NULL,
-			  `installed` tinyint(1) NOT NULL,
-			  `is_core` tinyint(1) NOT NULL,
-			  `updated_on` int(11) NOT NULL DEFAULT '0',
-			  PRIMARY KEY (`id`),
-			  UNIQUE KEY `slug` (`slug`)
-			) ENGINE=MyISAM  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
+        return $loader;
+    }
 
-		//create the modules table so that we can import all modules including the modules module
-		$this->ci->db->query($modules);
+    /**
+     * Installs a module
+     *
+     * @param string $slug The module slug
+     * @param bool   $is_core
+     *
+     * @return bool
+     */
+    public function install($slug, $is_core = false)
+    {
+        if ( ! ($details_class = $this->spawnClass($slug, $is_core))) {
+            exit("The module $slug is missing a details.php");
+        }
 
-		$session = "
-			CREATE TABLE IF NOT EXISTS ".$this->ci->db->dbprefix(str_replace('default_', '', config_item('sess_table_name')))." (
-			 `session_id` varchar(40) DEFAULT '0' NOT NULL,
-			 `ip_address` varchar(16) DEFAULT '0' NOT NULL,
-			 `user_agent` varchar(120) NOT NULL,
-			 `last_activity` int(10) unsigned DEFAULT 0 NOT NULL,
-			 `user_data` text NULL,
-			PRIMARY KEY (`session_id`),
-			KEY `last_activity_idx` (`last_activity`)
-			);
-		";
+        // Get some basic info
+        $module = $details_class->info();
 
-		// create a session table so they can use it if they want
-		$this->ci->db->query($session);
+        // Now lets set some details ourselves
+        $module['version'] = $details_class->version;
+        $module['is_core'] = $is_core;
+        $module['enabled'] = true;
+        $module['installed'] = true;
+        $module['slug'] = $slug;
 
-		// Loop through directories that hold modules
-		$is_core = TRUE;
+        // set the site_ref and upload_path for third-party devs
+        $details_class->site_ref = 'default';
+        $details_class->upload_path = 'uploads/default/';
 
-		foreach (array(PYROPATH, ADDONPATH, SHARED_ADDONPATH) as $directory)
-		{
-			// Loop through modules
-			foreach(glob($directory.'modules/*', GLOB_ONLYDIR) as $module_name)
-			{
-				$slug = basename($module_name);
+        // Run the install method to get it into the database
+        // try
+        // {
+            $details_class->install($this->pdb, $this->pdb->getSchemaBuilder());
+        // }
+        // catch (Exception $e)
+        // {
+        // 	// TODO Do something useful
+        // 	exit('HEY '.$e->getMessage()." in ".$e->getFile()."<br />");
 
-				if ( ! $details_class = $this->_spawn_class($slug, $is_core))
-				{
-					continue;
-				}
+        // 	return false;
+        // }
 
-				$this->install($slug, $is_core);
-			}
+        // Looks like it installed ok, add a record
+        return $this->add($module);
+    }
 
-			// Going back around, 2nd time is addons
-			$is_core = FALSE;
-		}
+    /**
+     * Add
+     *
+     * Insert the database record for a single module
+     *
+     * @param     array     Array of module informaiton.
+     * @return    boolean
+     */
+    public function add($module)
+    {
+        return $this->pdb
+            ->table('modules')
+            ->insert(array(
+                'name' => serialize($module['name']),
+                'slug' => $module['slug'],
+                'version' => $module['version'],
+                'description' => serialize($module['description']),
+                'skip_xss' => ! empty($module['skip_xss']),
+                'is_frontend' => ! empty($module['frontend']),
+                'is_backend' => ! empty($module['backend']),
+                'menu' => ! empty($module['menu']) ? $module['menu'] : false,
+                'enabled' => (bool) $module['enabled'],
+                'installed' => (bool) $module['installed'],
+                'is_core' => (bool) $module['is_core'],
+                'created_at' => date('Y-m-d H:i:s'),
+            )
+        );
+    }
 
-		// After modules are imported we need to modify the settings table
-		// This allows regular admins to upload addons on the first install but not on multi
-		$this->ci->db->where('slug', 'addons_upload')
-			->update('settings', array('value' => '1'));
+    /**
+     * Import All
+     *
+     * Create settings and streams core, and run the install() method for all modules
+     *
+     * @return    boolean
+     */
+    public function import_all()
+    {
+        // Install settings and streams core first. Other modules may need them.
+        $this->install('settings', true);
 
-		return TRUE;
-	}
+        ci()->load->library('settings/settings');
 
-	/**
-	 * Spawn Class
-	 *
-	 * Checks to see if a details.php exists and returns a class
-	 *
-	 * @param	string	$module_slug	The folder name of the module
-	 * @access	private
-	 * @return	array
-	 */
-	private function _spawn_class($slug, $is_core = FALSE)
-	{
-		$path = $is_core ? PYROPATH : ADDONPATH;
+        $this->install('streams_core', true);
+        $this->install('templates', true);
 
-		// Before we can install anything we need to know some details about the module
-		$details_file = $path . 'modules/' . $slug . '/details'.EXT;
+        // Are there any modules to install on this path?
+        if ($modules = glob(PYROPATH.'modules/*', GLOB_ONLYDIR)) {
+            // Loop through modules
+            foreach ($modules as $module_name) {
+                $slug = basename($module_name);
 
-		// Check the details file exists
-		if ( ! is_file($details_file))
-		{
-			$details_file = SHARED_ADDONPATH . 'modules/' . $slug . '/details'.EXT;
+                if ($slug == 'streams_core' or $slug == 'settings' or $slug == 'templates') {
+                    continue;
+                }
 
-			if ( ! is_file($details_file))
-			{
-				return FALSE;
-			}
-		}
+                // invalid details class?
+                if ( ! $details_class = $this->spawnClass($slug, true)) {
+                    continue;
+                }
 
-		// Sweet, include the file
-		include_once $details_file;
+                $this->install($slug, true);
+            }
+        }
 
-		// Now call the details class
-		$class = 'Module_'.ucfirst(strtolower($slug));
+        $user = ci()->session->userdata('user');
 
-		// Now we need to talk to it
-		return class_exists($class) ? new $class : FALSE;
-	}
+        // Populate site profiles
+        $this->pdb
+            ->table('profiles')->insert(array(
+                'user_id'       => 1,
+                'first_name'    => $user['firstname'],
+                'last_name'     => $user['lastname'],
+                'display_name'  => $user['firstname'].' '.$user['lastname'],
+                'lang'          => 'en',
+                'created_at' => date('Y-m-d H:i:s'),
+            ));
+
+        // After modules are imported we need to modify the settings table
+        // This allows regular admins to upload addons on the first install but not on multi
+        $this->pdb
+            ->table('settings')
+            ->where('slug', '=', 'addons_upload')
+            ->update(array('value' => true));
+
+        return true;
+    }
+
+    /**
+     * Spawn Class
+     *
+     * Checks to see if a details.php exists and returns a class
+     *
+     * @param string $slug    The folder name of the module
+     * @param bool   $is_core
+     *
+     * @return    Module
+     */
+    private function spawnClass($slug, $is_core = false)
+    {
+        $path = $is_core ? PYROPATH : ADDONPATH;
+
+        // Before we can install anything we need to know some details about the module<<<<<<< HEAD
+        $details_file = "{$path}modules/{$slug}/details.php";
+
+        // If it didn't exist as a core module or an addon then check shared_addons
+        if ( ! is_file($details_file)) {
+            $details_file = "{SHARED_ADDONPATH}modules/{$slug}/details.php";
+
+            if ( ! is_file($details_file)) {
+                return false;
+            }
+        }
+
+        // Sweet, include the file
+        include_once $details_file;
+
+        // Now call the details class
+        $class = 'Module_'.ucfirst(strtolower($slug));
+
+        // Now we need to talk to it
+        return class_exists($class) ? new $class($this->pdb) : false;
+    }
 }

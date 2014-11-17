@@ -1,127 +1,154 @@
-<?php defined('BASEPATH') or exit('No direct script access allowed');
+<?php
 
-class Module_Widgets extends Module {
+use Pyro\Module\Addons\AbstractModule;
 
-	public $version = '1.0';
-	
-	public function info()
-	{
-		return array(
-			'name' => array(
-				'sl' => 'Vtičniki',
-				'en' => 'Widgets',
-				'es' => 'Widgets',
-				'br' => 'Widgets',
-				'de' => 'Widgets',
-				'nl' => 'Widgets',
-				'fr' => 'Widgets',
-				'zh' => '小組件',
-				'it' => 'Widgets',
-				'ru' => 'Виджеты',
-				'ar' => 'الودجت',
-				'cs' => 'Widgety',
-				'fi' => 'Widgetit',
-				'lt' => 'Papildiniai'
-			),
-			'description' => array(
-				'sl' => 'Urejanje manjših delov blokov strani ti. Vtičniki (Widgets)',
-				'en' => 'Manage small sections of self-contained logic in blocks or "Widgets".',
-				'es' => 'Manejar pequeñas secciones de lógica autocontenida en bloques o "Widgets"',
-				'br' => 'Gerenciar pequenas seções de conteúdos em bloco conhecidos como "Widgets".',
-				'de' => 'Verwaltet kleine, eigentständige Bereiche, genannt "Widgets".',
-				'nl' => 'Beheer kleine onderdelen die zelfstandige logica bevatten, ofwel "Widgets".',
-				'fr' => 'Gérer des mini application ou "Widgets".',
-				'zh' => '可將小段的程式碼透過小組件來管理。即所謂 "Widgets"，或稱為小工具、部件。',
-				'it' => 'Gestisci piccole sezioni di logica a se stante in blocchi o "Widgets".',
-				'ru' => 'Управление небольшими, самостоятельными блоками.',
-				'ar' => 'إدارة أقسام صغيرة من البرمجيات في مساحات الموقع أو ما يُسمّى بالـ"وِدْجِتْ".',
-				'cs' => 'Spravujte malé funkční části webu neboli "Widgety".',
-				'fi' => 'Hallitse pieniä osioita, jotka sisältävät erillisiä lohkoja tai "Widgettejä".',
-				'el' => 'Διαχείριση μικρών τμημάτων αυτόνομης προγραμματιστικής λογικής σε πεδία ή "Widgets".',
-				'lt' => 'Nedidelių, savarankiškų blokų valdymas.'
-			),
-			'frontend' => FALSE,
-			'backend'  => TRUE,
-			'menu'	  => 'content'
-		);
-	}
-	
-	public function install()
-	{
-		$this->dbforge->drop_table('widget_areas');
-		$this->dbforge->drop_table('widget_instances');
-		$this->dbforge->drop_table('widgets');
-		
-		$widget_areas = "
-			CREATE TABLE " . $this->db->dbprefix('widget_areas') . " (
-			  `id` int(11) NOT NULL AUTO_INCREMENT,
-			  `slug` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
-			  `title` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
-			  PRIMARY KEY (`id`),
-			  UNIQUE KEY `unique_slug` (`slug`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
-		
-		$widget_instances = "
-			CREATE TABLE " . $this->db->dbprefix('widget_instances') . " (
-			  `id` int(11) NOT NULL AUTO_INCREMENT,
-			  `title` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
-			  `widget_id` int(11) DEFAULT NULL,
-			  `widget_area_id` int(11) DEFAULT NULL,
-			  `options` text COLLATE utf8_unicode_ci NOT NULL,
-			  `order` int(10) NOT NULL DEFAULT '0',
-			  `created_on` int(11) NOT NULL DEFAULT '0',
-			  `updated_on` int(11) NOT NULL DEFAULT '0',
-			  PRIMARY KEY (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
-		
-		$widgets = "
-			CREATE TABLE " . $this->db->dbprefix('widgets') . " (
-			  `id` int(11) NOT NULL AUTO_INCREMENT,
-			  `slug` varchar(100) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-			  `title` text COLLATE utf8_unicode_ci NOT NULL,
-			  `description` text COLLATE utf8_unicode_ci NOT NULL,
-			  `author` varchar(100) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-			  `website` varchar(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-			  `version` varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT '0',
-			  `enabled` tinyint(1) NOT NULL DEFAULT '1',
-			  `order` int(5) NOT NULL DEFAULT '0',
-			  `updated_on` int(11) NOT NULL DEFAULT '0',
-			  PRIMARY KEY (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
-		
-		$default_data = "
-			INSERT INTO " . $this->db->dbprefix('widget_areas') . " (slug, title) VALUES ('sidebar', 'Sidebar');
-		";
-		
-		if($this->db->query($widget_areas) &&
-		   $this->db->query($widget_instances) &&
-		   $this->db->query($widgets) &&
-		   $this->db->query($default_data))
-		{
-			return TRUE;
-		}
-	}
+/**
+ * Widgets Module
+ *
+ * @author  PyroCMS Dev Team
+ * @package PyroCMS\Core\Modules\Widgets
+ */
+class Module_Widgets extends AbstractModule
+{
+    public $version = '2.0.0';
 
-	public function uninstall()
-	{
-		//it's a core module, lets keep it around
-		return FALSE;
-	}
+    public function info()
+    {
+        return array(
+            'name' => array(
+                'en' => 'Widgets',
+                'br' => 'Widgets',
+                'pt' => 'Widgets',
+                'cs' => 'Widgety',
+                'da' => 'Widgets',
+                'de' => 'Widgets',
+                'el' => 'Widgets',
+                'es' => 'Widgets',
+                'fa' => 'ویجت ها',
+                'fi' => 'Vimpaimet',
+                'fr' => 'Widgets',
+                'id' => 'Widget',
+                'it' => 'Widgets',
+                'lt' => 'Papildiniai',
+                'nl' => 'Widgets',
+                'ru' => 'Виджеты',
+                'sl' => 'Vtičniki',
+                'tw' => '小組件',
+                'cn' => '小组件',
+                'hu' => 'Widget-ek',
+                'th' => 'วิดเจ็ต',
+                'se' => 'Widgetar',
+                'ar' => 'الودجتس',
+                'km' => 'មុខងារតូចៗ',
+            ),
+            'description' => array(
+                'en' => 'Manage small sections of self-contained logic in blocks or "Widgets".',
+                'ar' => 'إدارة أقسام صغيرة من البرمجيات في مساحات الموقع أو ما يُسمّى بالـ"ودجتس".',
+                'br' => 'Gerenciar pequenas seções de conteúdos em bloco conhecidos como "Widgets".',
+                'pt' => 'Gerir pequenas secções de conteúdos em bloco conhecidos como "Widgets".',
+                'cs' => 'Spravujte malé funkční části webu neboli "Widgety".',
+                'da' => 'Håndter små sektioner af selv-opretholdt logik i blokke eller "Widgets".',
+                'de' => 'Verwaltet kleine, eigentständige Bereiche, genannt "Widgets".',
+                'el' => 'Διαχείριση μικρών τμημάτων αυτόνομης προγραμματιστικής λογικής σε πεδία ή "Widgets".',
+                'es' => 'Manejar pequeñas secciones de lógica autocontenida en bloques o "Widgets"',
+                'fa' => 'مدیریت قسمت های کوچکی از سایت به طور مستقل',
+                'fi' => 'Hallitse pieniä osioita, jotka sisältävät erillisiä lohkoja tai "Vimpaimia".',
+                'fr' => 'Gérer des mini application ou "Widgets".',
+                'id' => 'Mengatur bagian-bagian kecil dari blok-blok yang memuat sesuatu atau dikenal dengan istilah "Widget".',
+                'it' => 'Gestisci piccole sezioni di logica a se stante in blocchi o "Widgets".',
+                'lt' => 'Nedidelių, savarankiškų blokų valdymas.',
+                'nl' => 'Beheer kleine onderdelen die zelfstandige logica bevatten, ofwel "Widgets".',
+                'ru' => 'Управление небольшими, самостоятельными блоками.',
+                'sl' => 'Urejanje manjših delov blokov strani ti. Vtičniki (Widgets)',
+                'tw' => '可將小段的程式碼透過小組件來管理。即所謂 "Widgets"，或稱為小工具、部件。',
+                'cn' => '可将小段的程式码透过小组件来管理。即所谓 "Widgets"，或称为小工具、部件。',
+                'hu' => 'Önálló kis logikai tömbök vagy widget-ek kezelése.',
+                'th' => 'จัดการส่วนเล็ก ๆ ในรูปแบบของตัวเองในบล็อกหรือวิดเจ็ต',
+                'se' => 'Hantera små sektioner med egen logik och innehåll på olika delar av webbplatsen.',
+                'km' => 'គ្រប់គ្រងផ្នែកតូចមួយនៃតក្កដោយខ្លួនឯងដែលមាននៅក្នុងប្លុកឬ "មុខងារតូច" ។',
+            ),
+            'frontend' => false,
+            'backend' => true,
+            'menu' => 'content',
+            'skip_xss' => true,
 
-	public function upgrade($old_version)
-	{
-		// Your Upgrade Logic
-		return TRUE;
-	}
-	
-	public function help()
-	{
-		// Return a string containing help info
-		// You could include a file and return it here.
-		return "No documentation has been added for this module.";
-	}
+            'sections' => array(
+                'instances' => array(
+                    'name' => 'widgets:instances',
+                    'uri' => 'admin/widgets',
+                ),
+                'areas' => array(
+                    'name' => 'widgets:areas',
+                    'uri' => 'admin/widgets/areas',
+                    'shortcuts' => array(
+                        array(
+                            'name' => 'widgets:add_area',
+                            'uri' => 'admin/widgets/areas/create',
+                        ),
+                    ),
+                ),
+            ),
+        );
+    }
+
+    public function install($pdb, $schema)
+    {
+        $schema->dropIfExists('widget_areas');
+        $schema->create('widget_areas', function ($table) {
+            $table->increments('id');
+            $table->string('slug')->nullable();
+            $table->string('name')->nullable();
+        });
+
+        $schema->dropIfExists('widget_instances');
+        $schema->create('widget_instances', function ($table) {
+            $table->increments('id');
+            $table->string('name')->nullable();
+            $table->integer('widget_id')->nullable();
+            $table->integer('widget_area_id')->nullable();
+            $table->text('options');
+            $table->integer('order')->default(0);
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at')->nullable();
+
+            $table->index('widget_id');
+            $table->index('widget_area_id');
+        });
+
+        $schema->dropIfExists('widgets');
+        $schema->create('widgets', function ($table) {
+            $table->increments('id');
+            $table->string('slug');
+            $table->text('name');
+            $table->text('description');
+            $table->string('author')->nullable();
+            $table->string('author_website')->nullable();
+            $table->string('website')->nullable();
+            $table->string('version')->default('1.0.0');
+            $table->boolean('enabled')->default(true);
+            $table->integer('order')->default(0);
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at')->nullable();
+        });
+
+        // Add the default data
+        $pdb->table('widget_areas')->insert(array(
+            'name' => 'Sidebar',
+            'slug' => 'sidebar',
+        ));
+
+        return true;
+    }
+
+    public function uninstall($pdb, $schema)
+    {
+        // This is a core module, lets keep it around.
+        return false;
+    }
+
+    public function upgrade($old_version)
+    {
+        return true;
+    }
+
 }
-/* End of file details.php */

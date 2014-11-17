@@ -1,24 +1,32 @@
-<h3><?php echo lang(sprintf('widgets.%s_area', ($this->method === 'create' ? 'add' : 'edit'))); ?></h3>
+<section class="title">
+    <h4><?php echo lang(sprintf('widgets:%s_area', ($this->method === 'create' ? 'add' : 'edit'))) ?></h4>
+</section>
 
-<?php echo form_open(uri_string(), 'class="box-container crud"'); ?>
+<section class="item">
+    <div class="content">
 
-<ol>
-	<li>
-		<label for="title"><?php echo lang('widgets.widget_area_title'); ?></label>
-		<?php echo form_input('title', $area->title, 'class="new-area-title"'); ?>
-		<span class="required-icon tooltip"><?php echo lang('required_label'); ?></span>
-	</li>
+    <?php echo form_open(uri_string(), 'class="form_inputs"') ?>
 
-	<li class="even">
-		<label for="slug"><?php echo lang('widgets.widget_area_slug'); ?></label>
-		<?php echo form_input('slug', $area->slug, 'class="new-area-slug"'); ?>
-		<span class="required-icon tooltip"><?php echo lang('required_label'); ?></span>
-	</li>
+    <ul>
+        <li>
+            <label for="name"><?php echo lang('widgets:widget_area_title') ?></label>
+            <?php echo form_input('name', $area->name) ?>
+            <span class="required-icon tooltip"><?php echo lang('required_label') ?></span>
+        </li>
 
-</ol>
+        <li class="even">
+            <label for="slug"><?php echo lang('widgets:widget_area_slug') ?></label>
+            <?php echo form_input('slug', $area->slug) ?>
+            <span class="required-icon tooltip"><?php echo lang('required_label') ?></span>
+        </li>
 
-<div class="buttons align-right padding-top">
-	<?php $this->load->view('admin/partials/buttons', array('buttons' => array('save', 'cancel'))); ?>
-</div>
+    </ul>
 
-<?php echo form_close(); ?>
+    <div class="buttons">
+        <?php $this->load->view('admin/partials/buttons', array('buttons' => array('save', 'cancel'))) ?>
+    </div>
+
+    <?php echo form_close() ?>
+
+    </div>
+</section>

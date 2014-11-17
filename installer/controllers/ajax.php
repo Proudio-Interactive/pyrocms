@@ -1,150 +1,130 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
- * @author 		Zack Kitzmiller - PyroCMS development team
- * @package		PyroCMS
- * @subpackage	Installer
- * @category	Application
- * @since 		v0.9.9.2
- *
  * Installer's Ajax controller.
+ *
+ * @author PyroCMS Dev Team
+ * @package PyroCMS\Installer\Controllers
  */
-class Ajax extends CI_Controller {
+class Ajax extends CI_Controller
+{
+    /**
+     * At start this controller should:
+     * 1. Check that this is indeed an AJAX request.
+     * 2. Set the language used by the user.
+     * 3. Load the language files.
+     */
+    public function __construct()
+    {
+        if ((isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') === false) {
+            show_error('You should not be here');
+        }
 
-	/**
-	 * Array of languages supported by the installer
-	 */
-	private $languages = array('arabic', 'english', 'dutch', 'brazilian', 'polish', 'chinese_traditional', 'french', 'slovenian', 'spanish', 'lithuanian');
+        parent::__construct();
 
-	public function __construct()
-	{
-		if ((isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') === FALSE)
-			show_error('You shouldn\'t be here');
-		parent::__construct();
-		$this->_set_language();
-		$this->lang->load('global');
-		$this->lang->load('step_1');
-	}
+        $languages = array();
+        $languages_directory = realpath(dirname(__FILE__).'/../language/');
+        foreach (glob($languages_directory.'/*', GLOB_ONLYDIR) as $path) {
+            $path = basename($path);
 
-	public function confirm_database()
-	{
-		$server = $this->input->post('server');
-		$username = $this->input->post('username');
-		$password = $this->input->post('password');
-		$port = $this->input->post('port');
+            if ( ! in_array($path, array('.', '..'))) {
+                $languages[] = $path;
+            }
+        }
 
-		$host = $server . ':' . $port;
+        // Check if the language is supported and set it.
+        if (in_array($this->session->userdata('language'), $languages)) {
+            $this->config->set_item('language', $this->session->userdata('language'));
+        }
+        unset($languages);
 
-		$link = @mysql_connect($host, $username, $password, TRUE);
+        // also we load some generic language labels
+        $this->lang->load('installer');
+    }
 
-		if (!$link)
-		{
-			$data['success'] = 'false';
-			$data['message'] = lang('db_failure') . mysql_error();
-		}
-		else
-		{
-			$data['success'] = 'true';
-			$data['message'] = lang('db_success');
-		}
+    public function confirm_database()
+    {
+        // TODO Maybe actually use this somewhere?
+        $create_db 	= $this->input->post('create_db') === 'true';
 
-		// Set some headers for our JSON
-		header('Cache-Control: no-cache, must-revalidate');
-		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-		header('Content-type: application/json');
+        // Set some headers for our JSON
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Content-type: application/json');
 
-		echo json_encode($data);
-	}
+        try {
+            // Create a connection to see if data is correct
+            $this->installer_lib->create_connection(array(
+                'driver'    => $this->input->post('driver'),
+                'database'  => $this->input->post('database'),
+                'hostname'  => $this->input->post('hostname'),
+                'port'      => $this->input->post('port'),
+                'username' 	=> $this->input->post('username'),
+                'password' 	=> $this->input->post('password'),
+            ));
+        } catch (Exception $e) {
+            exit(json_encode(array(
+                'success' => false,
+                'message' => lang('db_failure').$e->getMessage(),
+            )));
+        }
 
-	/**
-	 * Sets the language and loads the corresponding language files like the installer controller
-	 *
-	 * @access	private
-	 * @author	wupsbr
-	 * @since	1.0.0
-	 * @return	void
-	 */
-	private function _set_language()
-	{
-		// let's check if the language is supported
-		if (in_array($this->session->userdata('language'), $this->languages))
-		{
-			// if so we set it
-			$this->config->set_item('language', $this->session->userdata('language'));
-		}
+        echo json_encode(array(
+            'success' => true,
+            'message' => lang('db_success'),
+        ));
+    }
 
-		// let's load the language file belonging to the page i.e. method
-		$lang_file = $this->config->item('language') . '/' . $this->router->method . '_lang';
-		if (is_file(realpath(dirname(__FILE__) . '/../language/' . $lang_file . EXT)))
-		{
-			$this->lang->load($this->router->method);
-		}
+    /**
+     * Sends statistics back to pyrocms.com
+     *
+     * These are only used to see which OS's we should develop for and are anonymous.
+     *
+     * @author jeroenvdgulik
+     * @since 1.0.1
+     */
+    public function statistics()
+    {
+        $this->load->library('installer_lib');
+        $this->installer_lib->mysql_acceptable('server');
+        $this->installer_lib->mysql_acceptable('client');
+        $this->installer_lib->gd_acceptable();
 
-		// also we load some generic language labels
-		$this->lang->load('global');
-	}
+        $data = array(
+            'version' => CMS_VERSION,
+            'php_version' => phpversion(),
+            'webserver_hash' => md5($this->session->userdata('http_server').$this->input->server('SERVER_NAME').$this->input->server('SERVER_ADDR').$this->input->server('SERVER_SIGNATURE')),
+            'webserver_software' => $this->input->server('SERVER_SOFTWARE'),
+            'dbserver' => $this->installer_lib->mysql_server_version,
+            'dbclient' => $this->installer_lib->mysql_client_version,
+            'gd_version' => $this->installer_lib->gd_version,
+            'zlib_version' => $this->installer_lib->zlib_available(),
+            'curl' => $this->installer_lib->curl_available(),
+        );
 
-	/**
-	 * Sends statistics back to pyrocms.com. These are only used to see which OS's we should develop for
-	 * and are anonymous.
-	 *
-	 * @access	public
-	 * @author	jeroenvdgulik
-	 * @since	1.0.1
-	 * @return	void
-	 */
-	public function statistics()
-	{
-		$this->load->library('installer_lib');
-		$this->installer_lib->mysql_acceptable('server');
-		$this->installer_lib->mysql_acceptable('client');
-		$this->installer_lib->gd_acceptable();
+        include '../system/sparks/curl/1.2.1/libraries/Curl.php';
+        $url = 'https://www.pyrocms.com/statistics/add';
+        $curl = new Curl;
+        $curl->simple_post($url, $data);
+    }
 
-		$data = array(
-			'version' => CMS_VERSION,
-			'php_version' => phpversion(),
-			'webserver_hash' => md5($this->session->userdata('http_server').$this->input->server('SERVER_NAME').$this->input->server('SERVER_ADDR').$this->input->server('SERVER_SIGNATURE')),
-			'webserver_software' => $this->input->server('SERVER_SOFTWARE'),
-			'dbserver' => $this->installer_lib->mysql_server_version,
-			'dbclient' => $this->installer_lib->mysql_client_version,
-			'gd_version' => $this->installer_lib->gd_version,
-			'zlib_version' => $this->installer_lib->zlib_enabled(),
-			'curl' => $this->installer_lib->curl_enabled(),
-		);
+    /**
+     * Check if apache's mod_rewrite is enabled
+     *
+     * @return string
+     */
+    public function check_rewrite()
+    {
+        // if it doesn't exist then warn them at least
+        if ( ! function_exists('apache_get_modules')) {
+            return print(lang('rewrite_fail'));
+        }
 
-		include '../system/cms/libraries/Curl.php';
-		$url = 'http://pyrocms.com/statistics/add ';
-		$curl = new Curl;
-		$curl->simple_post($url, $data);
-	}
+        if (in_array('mod_rewrite', apache_get_modules())) {
+            return print('enabled');
+        }
 
-	/**
-	 * Check if apache's mod_rewrite is enabled
-	 *
-	 * @access	public
-	 * @author	Jerel Unruh - PyroCMS Dev Team
-	 * @return	string
-	 */
-	public function check_rewrite()
-	{
-		// if it doesn't exist then warn them at least
-		if ( ! function_exists('apache_get_modules'))
-		{
-			return print(lang('rewrite_fail'));
-		}
-
-		$modules = apache_get_modules();
-
-		if (in_array('mod_rewrite', $modules))
-		{
-			return print('enabled');
-		}
-		else
-		{
-			return print(lang('mod_rewrite'));
-		}
-	}
+        return print(lang('mod_rewrite'));
+    }
 
 }
-
-/* End of file ajax.php */

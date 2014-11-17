@@ -1,78 +1,68 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php defined('BASEPATH') OR exit('No direct script access allowed.');
+
+use Patchwork\Utf8;
+
 /**
- * CodeIgniter
+ * PyroCMS Inflector Helpers
  *
- * An open source application development framework for PHP 4.3.2 or newer
+ * This overrides Codeigniter's helpers/inflector_helper.php file.
  *
- * @package		CodeIgniter
- * @author		ExpressionEngine Dev Team
- * @copyright	Copyright (c) 2008 - 2009, EllisLab, Inc.
- * @license		http://codeigniter.com/user_guide/license.html
- * @link		http://codeigniter.com
- * @since		Version 1.0
- * @filesource
+ * @author      PyroCMS Dev Team
+ * @copyright   Copyright (c) 2012, PyroCMS LLC
+ * @package		PyroCMS\Core\Helpers
  */
 
-// ------------------------------------------------------------------------
-
-/**
- * CodeIgniter Inflector Helpers
- *
- * @package		CodeIgniter
- * @subpackage	Helpers
- * @category	Helpers
- * @author		ExpressionEngine Dev Team
- * @link		http://codeigniter.com/user_guide/helpers/directory_helper.html
- */
-
-
-// --------------------------------------------------------------------
-
-/**
- * Humanize - Cyrillic character support
- *
- * Takes multiple words separated by underscores and changes them to spaces
- *
- * @access	public
- * @param	string
- * @return	str
- */	
-if ( ! function_exists('humanize'))
-{	
-	function humanize($str)
-	{
-		$str = preg_replace('/[_]+/', ' ', trim($str));
-		
-		if( function_exists('mb_convert_case') )
-		{
-			return mb_convert_case($str, MB_CASE_TITLE, "UTF-8");
-		}
-		
-		else
-		{
-			return ucwords(strtolower($str));
-		}
-	}
-}
-	
-
-// --------------------------------------------------------------------
-
-/**
- * Keywords
- *
- * Takes multiple words separated by spaces and changes them to keywords
- *
- * @access	public
- * @param	string
- * @return	str
- */	
-if ( ! function_exists('keywords'))
-{	
+if ( ! function_exists('keywords')) {
+	/**
+	 * Keywords
+	 *
+	 * Takes multiple words separated by spaces and changes them to keywords
+	 * Makes sure the keywords are separated by a comma followed by a space.
+	 *
+	 * @param string $str The keywords as a string, separated by whitespace.
+	 * @return string The list of keywords in a comma separated string form.
+	 */
 	function keywords($str)
 	{
 		return preg_replace('/[\s]+/', ', ', trim($str));
 	}
 }
 
-/* End of file inflector_helper.php */
+if (!function_exists('slugify')) {
+
+	/**
+	 * Make slug from a given string
+	 *
+	 * @param string $str The string you want to convert to a slug.
+	 * @param string $separator The symbol you want in between slug parts.
+	 * @return string The string in slugified form.
+	 */
+	function slugify($string, $separator = '-')
+	{
+		$string = strtolower(trim(Utf8::toAscii($string)));
+		$string = preg_replace('/[\s]+/', $separator, $string);
+		
+		return preg_replace("/[^0-9-a-z]/i", '', $string);
+	}
+}
+
+if ( ! function_exists('rand_string')) {
+
+	/**
+	 * Create a random hash string based on microtime
+	 * @param 	int $length
+	 * @return 	string
+	*/
+	function rand_string($length = 10)
+	{
+		$chars = 'ABCDEFGHKLMNOPQRSTWXYZabcdefghjkmnpqrstwxyz';
+		$max = strlen($chars)-1;
+		$string = '';
+		mt_srand((double)microtime() * 1000000);
+		while (strlen($string) < $length)
+		{
+			$string .= $chars{mt_rand(0, $max)};
+		}
+		return $string;
+	}
+}

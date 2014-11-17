@@ -1,52 +1,45 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
  * Extends the CodeIgniter Config class
  *
- * @package   PyroCMS
+ * @author      PyroCMS Dev Team
+ * @copyright   Copyright (c) 2012, PyroCMS LLC
+ * @package   	PyroCMS\Core\Libraries
  */
-class MY_Config extends CI_Config
+class MY_Config extends MX_Config
 {
 	/**
-	 * Site URL - modified to stop double extensions eg: .rss.html
+	 * Modified CI_Config::site_ul() to stop double extensions eg: .rss.html
 	 *
-	 * @access	public
-	 * @param	string	the URI string
-	 * @return	string
+	 * @param string $uri the URI string
+	 * @return string
 	 */
-	function site_url($uri = '')
+	public function site_url($uri = '')
 	{
-		if (is_array($uri))
-		{
+		if (is_array($uri)) {
 			$uri = implode('/', $uri);
 		}
 
-		if ($uri == '')
-		{
+		if ($uri == '') {
 			return $this->slash_item('base_url').$this->item('index_page');
-		}
-		else
-		{
+		} else {
 			// -- Old busted shit
-			//$suffix = ($this->item('url_suffix') == FALSE) ? '' : $this->item('url_suffix');
+			//$suffix = ($this->item('url_suffix') == false) ? '' : $this->item('url_suffix');
 			// -- end old busted shit
-			
+
 			// -- Hot newness
-			if(strpos($uri, '|') > 0)
-			{
+			if (strpos($uri, '|') > 0) {
 				// Split the pipe
 				list($uri, $suffix) = explode('|', $uri);
-				
+
 				// Dont forget the period
 				$suffix = '.'.$suffix;
-			}
-			
-			else
-			{
-				$suffix = ($this->item('url_suffix') == FALSE) ? '' : $this->item('url_suffix');
+			} else {
+				$suffix = ($this->item('url_suffix') == false) ? '' : $this->item('url_suffix');
 			}
 			// -- end host newness
-			
+
 			return $this->slash_item('base_url').$this->slash_item('index_page').preg_replace("|^/*(.+?)/*$|", "\\1", $uri).$suffix;
 		}
 	}
@@ -54,19 +47,15 @@ class MY_Config extends CI_Config
 	/**
 	 * Set a config file item
 	 *
-	 * @access	public
-	 * @param	string	the config item key
-	 * @param	string	the config item value
-	 * @return	void
+	 * @param string $item the config item key
+	 * @param string $value the config item value
+	 * @param string $index
 	 */
-	function set_item($item, $value, $index = '')
+	public function set_item($item, $value, $index = '')
 	{
-		if ($index == '')
-		{
+		if ($index == '') {
 			$this->config[$item] = $value;
-		}
-		else
-		{
+		} else {
 			$this->config[$index][$item] = $value;
 		}
 	}

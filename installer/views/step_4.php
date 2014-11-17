@@ -1,98 +1,43 @@
-<h1><?php echo lang('header'); ?></h1>
+<section class="title">
+	<h3>{step4_header}</h3>
+</section>
+<section class="item">
+	<p>{step4_intro_text}</p>
+</section>
 
-<p><?php echo lang('intro_text'); ?></p>
+<?php echo form_open(uri_string(), 'id="install_frm"') ?>
 
-<?php echo form_open(uri_string(), 'id="install_frm"'); ?>
-
-	<h2><?php echo lang('db_settings'); ?></h2>
-
+<section class="title">
+	<h3>{default_user}</h3>
+</section>
+<section class="item">
 	<div class="input">
-		<label for="database"><?php echo lang('database'); ?></label>
-		<input type="text" id="database" class="input_text" name="database" value="<?php echo set_value('database'); ?>" />
+		<label for="username">{username}</label>
+		<?php echo form_input(array('id' => 'username', 'name' => 'user_username'), set_value('user_username')) ?>
 	</div>
-
 	<div class="input">
-		<label for="create_db"><?php echo lang('db_create'); ?></label>
-		<input type="checkbox" name="create_db" value="true" id="create_db" />
-		<small>(<?php echo lang('db_notice'); ?>)</small>
+		<label for="firstname">{firstname}</label>
+		<?php echo form_input(array('id' => 'firstname', 'name' => 'user_firstname'), set_value('user_firstname')) ?>
 	</div>
-
-	<br />
-
-		<input type="hidden" id="site_ref" name="site_ref" value="default" />
-
-	<h2><?php echo lang('default_user'); ?></h2>
-
 	<div class="input">
-		<label for="user_name"><?php echo lang('user_name'); ?></label>
-		<?php
-			echo form_input(array(
-				'id' => 'user_name',
-				'name' => 'user_name',
-				'value' => set_value('user_name')
-			));
-		?>
+		<label for="lastname">{lastname}</label>
+		<?php echo form_input(array('id' => 'lastname', 'name' => 'user_lastname'), set_value('user_lastname')) ?>
 	</div>
-
 	<div class="input">
-		<label for="user_firstname"><?php echo lang('first_name'); ?></label>
-		<?php
-			echo form_input(array(
-				'id' => 'user_firstname',
-				'name' => 'user_firstname',
-				'value' => set_value('user_firstname')
-			));
-		?>
+		<label for="email">{email}</label>
+		<?php echo form_input(array('id' => 'email', 'name' => 'user_email'), set_value('user_email')) ?>
 	</div>
-
 	<div class="input">
-		<label for="user_lastname"><?php echo lang('last_name'); ?></label>
-		<?php
-			echo form_input(array(
-				'id' => 'user_lastname',
-				'name' => 'user_lastname',
-				'value' => set_value('user_lastname')
-			));
-		?>
+		<label for="password">{password}</label>
+		<div class="password-wrapper">
+			<?php echo form_password(array('id' => 'user_password', 'name' => 'user_password', 'value' => set_value('user_password'))) ?>
+			<div id="progressbar"><div id="progress"></div></div>
+			<div id="status"><div><span id="complexity">0% Complex</span></div></div>
+		</div>
+		<br style="clear:both" />
 	</div>
+	<hr />
+	<input class="btn orange" id="next_step" type="submit" value="{finish}" />
+</section>
 
-	<div class="input">
-		<label for="user_email"><?php echo lang('email'); ?></label>
-		<?php
-			echo form_input(array(
-				'id' => 'user_email',
-				'name' => 'user_email',
-				'value' => set_value('user_email')
-			));
-		?>
-	</div>
-
-	<div class="input">
-		<label for="user_password"><?php echo lang('password'); ?></label>
-		<?php
-			echo form_password(array(
-				'id' => 'user_password',
-				'name' => 'user_password',
-				'value' => set_value('user_password')
-			));
-		?>
-	</div>
-
-	<div class="input">
-		<label for="user_confirm_password"><?php echo lang('conf_password'); ?></label>
-		<?php
-			echo form_password(array(
-				'id' => 'user_confirm_password',
-				'name' => 'user_confirm_password',
-				'value' => set_value('user_confirm_password')
-			));
-		?>
-	</div>
-
-	<div id="notification">
-	   <p class="text" id="confirm_pass"></p>
-	</div>
-
-	<input id="next_step" type="submit" id="submit" value="<?php echo lang('finish'); ?>" />
-
-<?php echo form_close(); ?>
+<?php echo form_close() ?>

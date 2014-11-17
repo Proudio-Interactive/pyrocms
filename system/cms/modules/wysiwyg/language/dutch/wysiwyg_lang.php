@@ -1,16 +1,12 @@
-<?php
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-$lang = array(
-    'wysiwyg.meta.width'    =>  'Breedte',
-    'wysiwyg.meta.height'   =>  'Hoogte',
-    'wysiwyg.meta.size'     =>  'Grootte',
-    'wysiwyg.label.insert_width'    => 'Geef breedte',
-    'wysiwyg.label.float'   =>  'Uitlijnen',
-    'wysiwyg.label.left'    =>  'Links',
-    'wysiwyg.label.right'   =>  'Rechts',
-    'wysiwyg.label.none'    =>  'Geen',
-    'wysiwyg.meta.mime'     =>  'Mime-type'
-    
-);
-
-/* end of file wysiwyg_lang.php */
+$lang['wysiwyg.meta.width'] = 'Breedte';
+$lang['wysiwyg.meta.height'] = 'Hoogte';
+$lang['wysiwyg.meta.size'] = 'Grootte';
+$lang['wysiwyg.label.insert_width'] = 'Geef breedte:';
+$lang['wysiwyg.label.no_limit'] = 'Full Size'; #translate
+$lang['wysiwyg.label.float'] = 'Uitlijnen';
+$lang['wysiwyg.label.left'] = 'Links';
+$lang['wysiwyg.label.right'] = 'Rechts';
+$lang['wysiwyg.label.none'] 	= 'Geen';
+$lang['wysiwyg.meta.mime'] = 'Mime-type';

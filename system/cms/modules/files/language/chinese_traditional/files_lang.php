@@ -1,100 +1,101 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * PyroCMS
- *
- * An open source CMS based on CodeIgniter
- *
- * @package		PyroCMS
- * @author		PyroCMS Dev Team
- * @license		Apache License v2.0
- * @link		http://pyrocms.com
- * @since		Version 1.0-dev
- * @filesource
- */
+// General
+$lang['files:files_title']					= '文件';
+$lang['files:fetching']						= '收集數據中...';
+$lang['files:fetch_completed']				= '結束';
+$lang['files:save_failed']					= '不能保存修改';
+$lang['files:item_created']					= '創建 "%s" 成功';
+$lang['files:item_updated']					= '更新 "%s" 成功';
+$lang['files:item_deleted']					= '刪除 "%s" 成功';
+$lang['files:item_not_deleted']				= '"%s" 不能被刪除';
+$lang['files:item_not_found']				= '對不起. 未能發現 "%s"';
+$lang['files:sort_saved']					= '新排序保存成功';
+$lang['files:no_permissions']				= '您未有足夠權限';
+
+// Labels
+$lang['files:activity']						= '活動';
+$lang['files:places']						= '位置';
+$lang['files:back']							= '後退';
+$lang['files:forward']						= '前進';
+$lang['files:start']						= '開始上傳';
+$lang['files:details']						= '細節';
+$lang['files:name']							= '名稱';
+$lang['files:slug']							= '簡寫';
+$lang['files:path']							= '路徑';
+$lang['files:added']						= '創建日期';
+$lang['files:width']						= '寬度';
+$lang['files:height']						= '高度';
+$lang['files:ratio']						= '比例';
+$lang['files:full_size']					= '原始大小';
+$lang['files:filename']						= '文件名';
+$lang['files:filesize']						= '文件大小';
+$lang['files:download_count']				= '下載次數';
+$lang['files:download']						= '下載';
+$lang['files:location']						= '位置';
+$lang['files:description']					= '描述';
+$lang['files:container']					= '容器';
+$lang['files:bucket']						= '批量';
+$lang['files:check_container']				= '檢查正確性';
+$lang['files:search_message']				= '輸入並執行';
+$lang['files:search']						= '搜索';
+$lang['files:synchronize']					= '同步';
+$lang['files:uploader']						= '拖放文件至此 <br />或<br /> 點擊選擇文件';
+
+// Context Menu
+$lang['files:refresh']						= '重新載入';
+$lang['files:open']							= '打開';
+$lang['files:new_folder']					= '新的文件夾';
+$lang['files:upload']						= '上傳';
+$lang['files:rename']						= '重命名';
+$lang['files:delete']						= '刪除';
+$lang['files:edit']							= '編輯';
+$lang['files:details']						= '細節';
+
+// Folders
+
+$lang['files:no_folders']					= '文件和文件夾進行管理，就像他們將在您的桌面上。右鍵單擊在下面這個消息，以創建您的第一個文件夾的面積。然後右擊該文件夾重命名，刪除，上傳文件，或更改，如連接到雲位置的詳細信息。';
+$lang['files:no_folders_places']			= '你創建的文件夾，將顯示在一個可以展開和折疊樹。 「鄰居」，點擊查看根文件夾。';
+$lang['files:no_folders_wysiwyg']			= '沒有任何文件夾';
+$lang['files:new_folder_name']				= '未命名';
+$lang['files:folder']						= '文件夾';
+$lang['files:folders']						= '文件夾';
+$lang['files:select_folder']				= '選擇一個目錄';
+$lang['files:subfolders']					= '子目錄';
+$lang['files:root']							= '根目錄';
+$lang['files:no_subfolders']				= '無子目錄';
+$lang['files:folder_not_empty']				= '您必須先刪除 "%s" ';
+$lang['files:mkdir_error']					= '無法創建 %s. 您必須手動操作。';
+$lang['files:chmod_error']					= '上傳目錄不可寫。請確認權限是 0777';
+$lang['files:location_saved']				= '目錄位置保存成功';
+$lang['files:container_exists']				= '"%s" 已經存在。存儲鏈接到該文件夾​​的內容。';
+$lang['files:container_not_exists']			= '您的帳號沒有 "%s". 請保存，我們將嘗試創建。 ';
+$lang['files:error_container']				= '未知原因而不能保存 "%s" ';
+$lang['files:container_created']			= '"%s" 被保存並連接到本目錄';
+$lang['files:unwritable']					= '"%s" 是只讀屬性，請修改權限為 0777';
+$lang['files:specify_valid_folder']			= '您必須上傳文件到一個有效的目標目錄';
+$lang['files:enable_cdn']					= '在開始同步前，請為 "%s" 在Rackspace的控制面板上激活CDN。';
+$lang['files:synchronization_started']		= '開始同步';
+$lang['files:synchronization_complete']		= '與同步 "%s" 成功';
+$lang['files:untitled_folder']				= '未命名目錄';
 
 // Files
-
-// Titles
-$lang['files.files_title']					= '檔案';
-$lang['files.upload_title']					= '上傳檔案';
-$lang['files.edit_title']					= 'Edit file "%s"'; #translate
-
-// Labels
-$lang['files.actions_label']				= '操作';
-$lang['files.download_label']				= '下載';
-$lang['files.edit_label']					= '編輯';
-$lang['files.delete_label']					= '刪除';
-$lang['files.upload_label']					= '上傳';
-$lang['files.description_label']			= '說明';
-$lang['files.type_label']					= '種類';
-$lang['files.file_label']					= '檔案';
-$lang['files.filename_label']				= '檔案名稱';
-$lang['files.filter_label']					= 'Filter'; #translate
-$lang['files.loading_label']				= 'Loading...'; #translate
-$lang['files.name_label']					= 'Name'; #translate
-
-$lang['files.dropdown_no_subfolders']		= '-- 無子目錄 --';
-$lang['files.dropdown_root']				= '-- 根目錄 --';
-
-$lang['files.type_a']						= '音樂';
-$lang['files.type_v']						= '影片';
-$lang['files.type_d']						= '文件';
-$lang['files.type_i']						= '圖片';
-$lang['files.type_o']						= '其他';
-
-$lang['files.display_grid']					= 'Grid'; #translate
-$lang['files.display_list']					= 'List'; #translate
-
-// Messages
-$lang['files.create_success']				= '此檔案已經儲存';
-$lang['files.create_error']					= 'An error as occourred.'; #translate
-$lang['files.edit_success']					= 'The file was successfully saved.'; #translate
-$lang['files.edit_error']					= 'An error occurred while trying to save the file.'; #translate
-$lang['files.delete_success']				= '此檔案已刪除';
-$lang['files.delete_error']					= '此檔案無法刪除';
-$lang['files.mass_delete_success']			= '%d of %d files were successfully deleted, they were "%s and %s"'; #translate
-$lang['files.mass_delete_error']			= 'An error occurred while trying to delete %d of %d files, they are "%s and %s".'; #translate
-$lang['files.upload_error']					= '必須上傳檔案';
-$lang['files.invalid_extension']			= '檔案必須有副檔名';
-$lang['files.not_exists']					= '已選取了一個不正確的目錄';
-$lang['files.no_files']						= '目前沒有檔案';
-$lang['files.no_permissions']				= 'You do not have permissions to see the files module.'; #translate
-$lang['files.no_select_error'] 				= 'You must select a file first, his request was interrupted.'; #translate
-
-// File folders
-
-// Titles
-$lang['file_folders.folders_title']			= '檔案目錄';
-$lang['file_folders.manage_title']			= '管理目錄';
-$lang['file_folders.create_title']			= '新增目錄';
-$lang['file_folders.delete_title']			= '確認刪除';
-$lang['file_folders.edit_title']			= 'Edit folder "%s"'; #translate
-
-// Labels
-$lang['file_folders.folders_label']			= '目錄';
-$lang['file_folders.folder_label']			= '目錄';
-$lang['file_folders.subfolders_label']		= '子目錄';
-$lang['file_folders.parent_label']			= '上級目錄';
-$lang['file_folders.name_label']			= '目錄名稱';
-$lang['file_folders.slug_label']			= '網址縮略(URL Slug)';
-$lang['file_folders.created_label']			= '建立時間';
-
-// Messages
-$lang['file_folders.create_success']		= '目錄已經儲存';
-$lang['file_folders.create_error']			= 'An error occurred while attempting to create your folder.'; #translate
-$lang['file_folders.duplicate_error']		= 'A folder named "%s" already exists.'; #translate
-$lang['file_folders.edit_success']			= 'The folder was successfully saved.'; #translate
-$lang['file_folders.edit_error']			= 'An error occurred while trying to save the changes.'; #translate
-$lang['file_folders.confirm_delete']		= 'Are you sure you want to delete the folders below, including all files and subfolders inside them?'; #translate
-$lang['file_folders.delete_mass_success']	= '%d of %d folders have been successfully deleted, they were "%s and %s.'; #translate
-$lang['file_folders.delete_mass_error']		= 'An error occurred while trying to delete %d of %d folders, they are "%s and %s".'; #translate
-$lang['file_folders.delete_success']		= '目錄 "%s" 已經刪除';
-$lang['file_folders.delete_error']			= 'An error occurred while trying to delete the folder "%s".'; #translate
-$lang['file_folders.not_exists']			= '已選取了一個不正確的目錄';
-$lang['file_folders.no_subfolders']			= '無';
-$lang['file_folders.no_folders']			= '目前沒有目錄';
-$lang['file_folders.mkdir_error']			= '無法建立 uploads/files 目錄';
-$lang['file_folders.chmod_error']			= '無法 chmod uploads/files 目錄權限';
+$lang['files:no_files']						= '無文件';
+$lang['files:file_uploaded']				= '"%s" 被上傳成功';
+$lang['files:unsuccessful_fetch']			= '無法獲取 "%s". 請確認此文件為公共屬性。';
+$lang['files:invalid_container']			= '"%s" 為非法容器.';
+$lang['files:no_records_found']				= '沒有記錄';
+$lang['files:invalid_extension']			= '文件 "%s" 的後綴被限制';
+$lang['files:upload_error']					= '文件上傳失敗';
+$lang['files:description_saved']			= '新的文件描述被保存成功';
+$lang['files:file_moved']					= '"%s" 被成功移動';
+$lang['files:exceeds_server_setting']		= '服務器不能負擔此大型文件';
+$lang['files:exceeds_allowed']				= '文件大小超過限制';
+$lang['files:file_type_not_allowed']		= '不允許上傳此類型文件';
+$lang['files:type_a']						= '聲音';
+$lang['files:type_v']						= '影像';
+$lang['files:type_d']						= '文件';
+$lang['files:type_i']						= '圖片';
+$lang['files:type_o']						= '其他';
 
 /* End of file files_lang.php */

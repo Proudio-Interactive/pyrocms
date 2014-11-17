@@ -1,100 +1,109 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-/**
- * PyroCMS
- *
- * An open source CMS based on CodeIgniter
- *
- * @package		PyroCMS
- * @author		PyroCMS Dev Team
- * @license		Apache License v2.0
- * @link		http://pyrocms.com
- * @since		Version 1.0-dev
- * @filesource
- */
+// General
+$lang['files:files_title']					= 'Pliki';
+$lang['files:fetching']						= 'Odbieranie danych...';
+$lang['files:fetch_completed']				= 'Ukończone';
+$lang['files:save_failed']					= 'Przepraszamy. Zamiany nie zostały zapisane.';
+$lang['files:item_created']					= '"%s" został utworzony';
+$lang['files:item_updated']					= '"%s" został zaktualizowany';
+$lang['files:item_deleted']					= '"%s" został usunięty';
+$lang['files:item_not_deleted']				= '"%s" nie mógł zostać usunięty';
+$lang['files:item_not_found']				= 'Przepraszamy. "%s" nie mógł zostać znaleziony';
+$lang['files:sort_saved']					= 'Kolejność sortowania została zapisana';
+$lang['files:no_permissions']				= 'Nie masz wystarczających uprawnień';
+
+// Labels
+$lang['files:activity']						= 'Aktywność';
+$lang['files:places']						= 'Miejsca';
+$lang['files:back']							= 'Z powrotem';
+$lang['files:forward']						= 'Naprzód';
+$lang['files:start']						= 'Zacznij wczytywanie';
+$lang['files:details']						= 'Szczegóły';
+$lang['files:id']							= 'ID';
+$lang['files:name']							= 'Nazwa';
+$lang['files:slug']							= 'Slug'; //not traslatable to polish
+$lang['files:path']							= 'Ścieżka';
+$lang['files:added']						= 'Data dodania';
+$lang['files:width']						= 'Szerokość';
+$lang['files:height']						= 'Wysokość';
+$lang['files:ratio']						= 'Proporcja';
+$lang['files:alt_attribute']				= 'Atrybut Alt';
+$lang['files:full_size']					= 'Pełny rozmiar';
+$lang['files:filename']						= 'Nazwa pliku';
+$lang['files:filesize']						= 'Rozmiar pliku';
+$lang['files:download_count']				= 'Ilość pobrań';
+$lang['files:download']						= 'Pobierz';
+$lang['files:location']						= 'Lokacja';
+$lang['files:keywords']						= 'Słowa kluczowe';
+$lang['files:toggle_data_display']			= 'Przełącz widok danych';
+$lang['files:description']					= 'Opis';
+$lang['files:container']					= 'Kontener';
+$lang['files:bucket']						= 'Pojemnik';
+$lang['files:check_container']				= 'Sprawdź poprawność';
+$lang['files:search_message']				= 'Wpisz i kliknij Enter';
+$lang['files:search']						= 'Szukaj';
+$lang['files:synchronize']					= 'Synchronizuj';
+$lang['files:uploader']						= 'Przeciągnij pliki tu <br />lub<br />Kliknij by wybrać pliki';
+$lang['files:replace_file']					= 'Zamień plik';
+
+// Context Menu
+$lang['files:refresh']						= 'Odśwież';
+$lang['files:open']							= 'Otwórz';
+$lang['files:new_folder']					= 'Nowy folder';
+$lang['files:upload']						= 'Wczytaj';
+$lang['files:rename']						= 'Zmień nazwę';
+$lang['files:replace']						= 'Zamień';
+$lang['files:delete']						= 'Usuń';
+$lang['files:edit']							= 'Edytuj';
+$lang['files:details']						= 'Szczegóły';
+
+// Folders
+
+$lang['files:no_folders']					= 'Pliki i foldery są zarządzane tak jak na pulpicie komputera. Kliknij prawym przyciskiem myszy w obszarze poniżej tej wiadomości, aby utworzyć pierwszy folder. Następnie kliknij prawym przyciskiem myszy na folder, aby zmienić nazwę, usunąć go, wgrać do niego pliki, zmienić dane, takie jak połączenie go z miejscem w chmurze.';
+$lang['files:no_folders_places']			= 'Foldery utworzone pojawią się tutaj w drzewie, które można rozszerzyć i rozwijać. Kliknij na "Miejsca", aby zobaczyć folder główny.';
+$lang['files:no_folders_wysiwyg']			= 'Żadnych folderów jescze nie utworzono.';
+$lang['files:new_folder_name']				= 'Folder bez nazwy';
+$lang['files:folder']						= 'Folder';
+$lang['files:folders']						= 'Foldery';
+$lang['files:select_folder']				= 'Wybierz folder';
+$lang['files:subfolders']					= 'Subfoldery';
+$lang['files:root']							= 'Root'; //not traslatable to polish
+$lang['files:no_subfolders']				= 'Brak subfolderów';
+$lang['files:folder_not_empty']				= 'Najpierw musisz usunąć zawartość folderu "%s"';
+$lang['files:mkdir_error']					= 'Nie możemy utworzyć folderu %s. Musisz go utworzyć manualnie.';
+$lang['files:chmod_error']					= 'Katalog wczytywania nie ma uprawnień do zapisu. Musi mieć prawa 0777';
+$lang['files:location_saved']				= 'Lokalizacja folderu została zapisana';
+$lang['files:container_exists']				= '"%s" istnieje. Zapisz by przyłączyć jego zawartość do folderu';
+$lang['files:container_not_exists']			= '"%s" nie istnieje na twoim koncie. Zapisz a postaramy się go utworzyć.';
+$lang['files:error_container']				= '"%s" nie mogże być utworzony i nie mogliśmy ustalić przyczyny';
+$lang['files:container_created']			= '"%s" został utworzony i jest obecnie powiązany z tym folderem';
+$lang['files:unwritable']					= '"%s" nie ma uprawnień do zapisu, prosimy zmienić jego prawa do 0777';
+$lang['files:specify_valid_folder']			= 'Musisz podać prawidłowy folder, aby przesłać pliki do niego';
+$lang['files:enable_cdn']					= 'Musisz włączyć CDN dla "%s" za pośrednictwem panelu kontrolnego Rackspace zanim będzimy mogli synchronizować';
+$lang['files:synchronization_started']		= 'Rozpocznij synchronizację';
+$lang['files:synchronization_complete']		= 'Synchronizacja dla katalogu "%s" została zakończona';
+$lang['files:untitled_folder']				= 'Folder bez nazwy';
 
 // Files
-
-// Titles
-$lang['files.files_title']					= 'Pliki';
-$lang['files.upload_title']					= 'Wgraj pliki';
-$lang['files.edit_title']					= 'Edytuj plik "%s"';
-
-// Labels
-$lang['files.actions_label']				= 'Akcja';
-$lang['files.download_label']				= 'Pobierz'; 
-$lang['files.edit_label']					= 'Edytuj';
-$lang['files.delete_label']					= 'Usuń';
-$lang['files.upload_label']					= 'Wgraj';
-$lang['files.description_label']			= 'Opis';
-$lang['files.type_label']					= 'Typ';
-$lang['files.file_label']					= 'Plik';
-$lang['files.filename_label']				= 'Nazwa pliku';
-$lang['files.filter_label']					= 'Sortuj'; 
-$lang['files.loading_label']				= 'Ładuję...';
-$lang['files.name_label']					= 'Nazwa'; 
-
-$lang['files.dropdown_no_subfolders']		= '-- Brak --';
-$lang['files.dropdown_root']				= '-- Root --';
-
-$lang['files.type_a']						= 'Plik audio';
-$lang['files.type_v']						= 'Plik video';
-$lang['files.type_d']						= 'Dokument';
-$lang['files.type_i']						= 'Obraz';
-$lang['files.type_o']						= 'Inny';
-
-$lang['files.display_grid']					= 'Kostka';
-$lang['files.display_list']					= 'Lista';
-
-// Messages
-$lang['files.create_success']				= 'Plik został zachowany.';
-$lang['files.create_error']					= 'Wystąpił błąd.';
-$lang['files.edit_success']					= 'Plik został pomyślnie zapisany.';
-$lang['files.edit_error']					= 'Wystąpił błąd podczas próby zapisania pliku.'; 
-$lang['files.delete_success']				= 'Plik został usunięty.';
-$lang['files.delete_error']					= 'Plik nie mógł zostać usunięty.';
-$lang['files.mass_delete_success']			= '%d z %d zostały pomyślnie usunięte, są to "%s oraz %s"';
-$lang['files.mass_delete_error']			= 'Wystąpił błąd poczas próby usunięcia %d z %d plików, są to "%s oraz %s".';
-$lang['files.upload_error']					= 'Plik musi zostac wysłany na server.'; 
-$lang['files.invalid_extension']			= 'Plik musi mieć prawidłowe rozszerzenie.'; 
-$lang['files.not_exists']					= 'Wybrano nieprawidłowy katalog.';
-$lang['files.no_files']						= 'W tej chwili nie ma żadnych plików.';
-$lang['files.no_permissions']				= 'Nie posiadasz uprawnień by zobaczyć pliki tego modułu.'; 
-$lang['files.no_select_error'] 				= 'Musisz napierw zaznaczyc plik.'; 
-
-// File folders
-
-// Titles
-$lang['file_folders.folders_title']			= 'Katalogi plików';
-$lang['file_folders.manage_title']			= 'Zarządzaj katalogami';
-$lang['file_folders.create_title']			= 'Dodaj katalog';
-$lang['file_folders.delete_title']			= 'Potwierdź usunięcie';
-$lang['file_folders.edit_title']			= 'Edytuj folder "%s"'; 
-
-// Labels
-$lang['file_folders.folders_label']			= 'Katalogi';
-$lang['file_folders.folder_label']			= 'Katalog';
-$lang['file_folders.subfolders_label']		= 'Podkatalog';
-$lang['file_folders.parent_label']			= 'Rodzic';
-$lang['file_folders.name_label']			= 'Nazwa';
-$lang['file_folders.slug_label']			= 'URL Slug';
-$lang['file_folders.created_label']			= 'Utworzony';
-
-// Messages
-$lang['file_folders.create_success']		= 'Katalog został zachowany.';
-$lang['file_folders.create_error']			= 'Wystąpił błąd poczas próby utworzenia folderu.'; 
-$lang['file_folders.duplicate_error']		= 'Folder o nazwie "%s" już istnieje.'; 
-$lang['file_folders.edit_success']			= 'Folder pomyślnie zapisany.'; 
-$lang['file_folders.edit_error']			= 'Wystąpił błąd podczas próby zapisania zmian.'; 
-$lang['file_folders.confirm_delete']		= 'Czy jesteś pewny że chcesz usunąć poniższe foldery, włanczając w to wszystkie podfoldery oraz pliki?';
-$lang['file_folders.delete_mass_success']	= '%d z %d folderów zostały pomyślnie usunięte, są one "%s oraz %s.';
-$lang['file_folders.delete_mass_error']		= 'Wystąpił błąd podczas próby usunięcia %d z %d folderów, są one "%s oraz %s".'; 
-$lang['file_folders.delete_success']		= 'Katalog "%s" został usunięty.';
-$lang['file_folders.delete_error']			= 'Wystąpił błąd podczas próby usunięcia folderu "%s".';
-$lang['file_folders.not_exists']			= 'Wybrany został nieprawidłowy katalog.';
-$lang['file_folders.no_subfolders']			= 'Żaden';
-$lang['file_folders.no_folders']			= 'Twoje pliki są sortowane wegług katalogów, obecnie nie masz żadnych katalogów.';
-$lang['file_folders.mkdir_error']			= 'Nie można utworzyć katalogu uploads/files';
-$lang['file_folders.chmod_error']			= 'Nie można zmienić chmod dla katalogu uploads/files';
+$lang['files:no_files']						= 'Pliki nie zostały znalezione';
+$lang['files:file_uploaded']				= '"%s" został wczytany';
+$lang['files:unsuccessful_fetch']			= 'Nie udało nam się przyłączyć "%s". Czy jesteś pewien, że to jest plik publiczny?';
+$lang['files:invalid_container']			= '"%s" nie wydaje się być prawidłowym kontenerem.';
+$lang['files:no_records_found']				= 'Nie można znaleźć żadnych rekordów';
+$lang['files:invalid_extension']			= '"%s" posiada rozszerzenie, które jest niedozwolone';
+$lang['files:upload_error']					= 'Nie udało się przesłać pliku';
+$lang['files:description_saved']			= 'Szczegóły pliku zostały zapisane';
+$lang['files:alt_saved']					= 'Atrybut Alt obrazka został zapisany';
+$lang['files:file_moved']					= '"%s" został usunięty z powodzeniem';
+$lang['files:exceeds_server_setting']		= 'Serwer nie może tego obsłużyć, to zbyt duży plik';
+$lang['files:exceeds_allowed']				= 'Plik przekracza dozwolony maksymalny rozmiar';
+$lang['files:file_type_not_allowed']		= 'Ten typ pliku nie jest dozwolony';
+$lang['files:replace_warning']				= 'Uwaga: Nie zastępuj plików z różnymi rozszerzeniami (np: .jpg z .png)';
+$lang['files:type_a']						= 'Audio';//not traslatable to polish
+$lang['files:type_v']						= 'Video';//not traslatable to polish
+$lang['files:type_d']						= 'Dokument';
+$lang['files:type_i']						= 'Obrazek';
+$lang['files:type_o']						= 'Inny';
 
 /* End of file files_lang.php */

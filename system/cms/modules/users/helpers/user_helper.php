@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php
 
 /**
  * User Helpers
@@ -8,81 +8,101 @@
  * @category	Helpers
  * @author		Phil Sturgeon
  */
-// ------------------------------------------------------------------------
 
 /**
- * Return a users display name based on settings
+ * Checks to see if a user is logged in or not.
  *
- * @param int $user the users id
- * @return  string
+ * @return bool
+ */
+function is_logged_in()
+{
+    return (isset(ci()->current_user));
+}
+
+/**
+ * Checks if a group has access to module or role
+ *
+ * @param string $module sameple: pages
+ * @param string $role sample: put_live
+ * @return bool
+ * @deprecated Use $this->current_user->hasAccess()
  */
 function group_has_role($module, $role)
 {
-	if (empty(ci()->current_user))
-	{
-		return FALSE;
-	}
+    if ( ! is_logged_in()) {
+        return false;
+    }
 
-	if (ci()->current_user->group == 'admin')
-	{
-		return TRUE;
-	}
-
-	$permissions = ci()->permission_m->get_group(ci()->current_user->group_id);
-
-	if (empty($permissions[$module]) or empty($permissions[$module]->$role))
-	{
-		return FALSE;
-	}
-
-	return TRUE;
+    return ci()->current_user->hasAccess("{$module}.{$role}");
 }
-
-
-function role_or_die($module, $role)
-{
-	group_has_role($module, $role) or show_error(lang('cp_access_denied'));
-}
-
-// ------------------------------------------------------------------------
 
 /**
- * Return a users display name based on settings
+ * Checks if role has access to module or returns error
  *
- * @param int $user the users id
- * @return  string
+ * @param string $module sample: pages
+ * @param string $role sample: edit_live
+ * @param string $redirect_to (default: 'admin') Url to redirect to if no access
+ * @param string $message (default: '') Message to display if no access
+ * @return mixed
  */
-function user_displayname($user)
+function role_or_die($module, $role, $redirect_to = 'admin', $message = null)
 {
-	if (is_numeric($user))
-	{
-		$user = ci()->ion_auth->get_user($user);
-	}
+    if (!$message) {
+        $message = lang_label('lang:'.$module.'.role_'.$role.'.denied');
 
-	$user = (array) $user;
+        if (empty($message)) {
+            $message = lang('cp:access_denied');
+        }
+    }
 
-	// Static var used for cache
-	if ( ! isset($_users))
-	{
-		static $_users = array();
-	}
+    if (ci()->input->is_ajax_request() and ! group_has_role($module, $role)) {
+        echo json_encode(array('error' => $message));
+        return false;
 
-	// check it exists
-	if (isset($_users[$user['id']]))
-	{
-		return $_users[$user['id']];
-	}
+    } elseif ( ! group_has_role($module, $role)) {
+        ci()->session->set_flashdata('error', $message);
+        redirect($redirect_to);
+    }
+    return true;
+}
 
-	$user_name = empty($user['display_name']) ? $user['username'] : $user['display_name'];
+/**
+ * Whacky old password hasher
+ *
+ * @param int    $identity  The users identity
+ * @param string $password  The password provided to attempt a login
+ * @return  string
+ * @deprecated
+ * Nobody gets to make fun of me for this. We're deleting Ion Auth and
+ * had to keep the logic around for the lifetime of 2.3. When upgrading to 3.0
+ * this will go away and users STILL using old-style passwords will need to do
+ *  a "Forgot Password" to get in. More on this later. Phil
+ */
+function whacky_old_password_hasher($identity, $password)
+{
+    if ( ! isset($identity, $password)) {
+        return rand_string(100);
+    }
 
-	if (ci()->settings->enable_profiles)
-	{
-		$user_name = anchor('user/' . $user['id'], $user_name);
-	}
+    $schema = ci()->pdb->getSchemaBuilder();
 
-	$_users[$user['id']] = $user_name;
+    if ($schema->hasColumn('users', 'salt')) {
 
-	return $user_name;
+        $salt = ci()->pdb
+            ->table('users')
+            ->select('salt')
+            ->whereRaw('(username = ? OR email = ?)', array($identity, $identity))
+            ->take(1)
+            ->pluck('salt');
+
+        if ( ! $salt) {
+            return rand_string(100);
+        }
+    } else {
+        return rand_string(100);
+    }
+
+    return sha1($password.$salt);
 }
 
 /* End of file users/helpers/user_helper.php */

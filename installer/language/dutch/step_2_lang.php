@@ -1,4 +1,4 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php defined('BASEPATH') or exit('No direct script access allowed');
 
 // labels
 $lang['header']			=	'Stap 2: Controleer benodigdheden';
@@ -29,7 +29,7 @@ $lang['gd_fail']		=	'We kunnen niet vaststellen welke versie van de GD Library i
 $lang['summary']		=	'Overzicht';
 
 $lang['zlib']			=	'Zlib';
-$lang['zlib_required']	= 	'PyroCMS heeft Zlib nodig om thema&acute;s te kunnen uitpakken en installeren'; 
+$lang['zlib_required']	= 	'PyroCMS heeft Zlib nodig om thema&acute;s te kunnen uitpakken en installeren';
 $lang['zlib_fail']		=	'Zlib werd niet aangetroffen. Dit betekent meestal dat Zlib niet geinstalleerd is. PyroCMS kan nog steeds uitstekend functioneren, maar installatie van thema&acute;s is niet mogelijk. U wordt sterk aangeraden Zlib te installeren.';
 
 $lang['curl']			=	'Curl';
@@ -45,5 +45,3 @@ $lang['retry']			=	'Probeer opnieuw';
 
 // messages
 $lang['step1_failure']	=	'U moet de benodigde databaseinstellingen in het formulier hieronder invullen.';
-
-/* End of file step_2_lang.php */

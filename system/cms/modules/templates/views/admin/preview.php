@@ -1,8 +1,8 @@
 
-	<h2 class="template-subject">
-		<?php echo $subject; ?>
-	</h2>
-	
-	<div class="template-body">
-		<?php echo $body; ?>
-	</div>
+    <h4 class="template-subject">
+        <?php echo $email_template->subject ?>
+    </h4>
+
+    <div class="template-body">
+        <?php echo $email_template->body ?>
+    </div>

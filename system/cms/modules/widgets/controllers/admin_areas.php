@@ -1,276 +1,216 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
+use Pyro\Module\Addons\WidgetAreaModel;
+
 /**
  * Admin controller for adding and managing widget areas.
  *
- * @package 		PyroCMS
- * @subpackage 		Modules
- * @category		Widgets
- * @author			PyroCMS Development Team
+ * @author      PyroCMS Dev Team
+ * @package     PyroCMS\Core\Modules\Widgets\Controllers
  *
  */
-class Admin_areas extends Admin_Controller {
+class Admin_areas extends Admin_Controller
+{
+    /**
+     * The current active section
+     *
+     * @var string
+     */
+    protected $section = 'areas';
 
-	/**
-	 * Array that contains the validation rules
-	 * 
-	 * @access	protected
-	 * @var		array
-	 */
-	protected $_validation_rules = array(
-		array(
-			'field' => 'title',
-			'label' => 'lang:widgets.widget_area_title',
-			'rules' => 'trim|required|max_length[100]'
-		),
-		array(
-			'field' => 'slug',
-			'label' => 'lang:widgets.widget_area_slug',
-			'rules' => 'trim|required|alpha_dash|max_length[100]'
-		)
-	);
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        parent::__construct();
 
-	/**
-	 * Constructor method
-	 * 
-	 * @access	public
-	 * @return	void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
+        $this->lang->load('widgets');
 
-		$this->load->library('widgets');
-		$this->lang->load('widgets');
+        $this->widgets = $this->widgetManager->getModel();
+        $this->widgetAreas = $this->widgetManager->getAreaModel();
 
-		$this->input->is_ajax_request() AND $this->template->set_layout(FALSE);
+        if ($this->input->is_ajax_request()) {
+            $this->template->set_layout(false);
+        }
 
-		$this->template
-			->set_partial('shortcuts', 'admin/partials/shortcuts')
-			->append_metadata(js('widgets.js', 'widgets'))
-			->append_metadata(css('widgets.css', 'widgets'));
-	}
+        $this->template
+            ->append_js('module::widgets.js')
+            ->append_css('module::widgets.css');
+    }
 
-	public function index()
-	{
-		$data = array();
+    public function index()
+    {
+        $areas = $this->widgetAreas->findAllWithInstances();
 
-		$this->db->order_by('`title`');
+        // Create the layout
+        return $this->template
+            ->title($this->module_details['name'])
+            ->set('areas', $areas)
+            ->build('admin/areas/index', null, $this->method !== 'index');
+    }
 
-		$data['widget_areas'] = $this->widgets->list_areas();
+    /**
+     * Add a new widget area
+     *
+     * @return void
+     */
+    public function create()
+    {
+        $area = new WidgetAreaModel;
 
-		// Go through all widget areas
-		foreach ($data['widget_areas'] as &$area)
-		{
-			$area->widgets = $this->widgets->list_area_instances($area->slug);
-		}
+        if ($this->input->method() === 'post') {
 
-		// Create the layout
-		return $this->template
-			->title($this->module_details['name'])
-			->build('admin/areas/index', $data, $this->method !== 'index');
-	}
+            $area->name = $this->input->post('name');
+            $area->slug = $this->input->post('slug');
 
-	/**
-	 * Add a new widget area
-	 * @access public
-	 * @return void
-	 */
-	public function create()
-	{
-		$data = array();
+            if ($area->save()) {
 
-		$this->load->library('form_validation');
-		$this->form_validation->set_rules($this->_validation_rules);
+                // Fire an event. A widget area has been created.
+                Events::trigger('widget_area_created', $area);
 
-		if ($this->form_validation->run())
-		{
-			$input = array(
-				'title'	=> $this->input->post('title'),
-				'slug'	=> $this->input->post('slug')
-			);
+                $status     = 'success';
+                $message    = lang('success_label');
+            } else {
+                $status     = 'error';
+                $message    = lang('error_label');
+            }
 
-			if ($id = $this->widgets->add_area($input))
-			{
-				$area		= $this->widgets->get_area($id);
-				$status		= 'success';
-				$message	= lang('success_label');
-			}
-			else
-			{
-				$status		= 'error';
-				$message	= lang('error_label');
-			}
+            if ($this->input->is_ajax_request()) {
+                $data = array('messages' => array($status => $message));
+                $message = $this->load->view('admin/partials/notices', $data, true);
 
-			if ($this->input->is_ajax_request())
-			{
-				$data = array();
+                return $this->template->build_json(array(
+                    'status'    => $status,
+                    'message'   => $message,
+                    'html'      => ($status === 'success' ? $this->index() : null),
+                    'active'    => (isset($area) && $area ? '#area-' . $area->slug . ' header' : false)
+                ));
+            }
 
-				$data['messages'][$status] = $message;
-				$message = $this->load->view('admin/partials/notices', $data, TRUE);
+            if ($status === 'success') {
+                $this->session->set_flashdata($status, $message);
 
-				return $this->template->build_json(array(
-					'status'	=> $status,
-					'message'	=> $message,
-					'html'		=> ($status === 'success' ? $this->index() : NULL),
-					'active'	=> (isset($area) && $area ? '#area-' . $area->slug . ' header' : FALSE)
-				));
-			}
+                redirect('admin/widgets/areas');
+            }
 
-			if ($status === 'success')
-			{
-				$this->session->set_flashdata($status, $message);
+            $this->template->set('messages', array($status => $message));
 
-				redirect('admim/widgets');
-				return;
-			}
+        } elseif (validation_errors()) {
+            if ($this->input->is_ajax_request()) {
+                $status     = 'error';
+                $message    = $this->load->view('admin/partials/notices', array(), true);
 
-			$data['messages'][$status] = $message;
-		}
-		elseif (validation_errors())
-		{
-			if ($this->input->is_ajax_request())
-			{
-				$status		= 'error';
-				$message	= $this->load->view('admin/partials/notices', array(), TRUE);
+                return $this->template->build_json(array(
+                    'status'    => $status,
+                    'message'   => $message
+                ));
+            }
+        }
 
-				return $this->template->build_json(array(
-					'status'	=> $status,
-					'message'	=> $message
-				));
-			}
-		}
+        $this->template
+            ->set('area', $area)
+            ->build('admin/areas/form');
+    }
 
-		foreach ($this->_validation_rules as $rule)
-		{
-			$area->{$rule['field']} = set_value($rule['field']);
-		}
+    /**
+     * Edit widget area
+     *
+     * @param int ID of the widget area to edit
+     * @return void
+     */
+    public function edit($slug = null)
+    {
+        if (! ($slug and $area = $this->widgetAreas->findBySlug($slug))) {
+            // @todo: set error
+            return false;
+        }
 
-		$data['area'] = $area;
+        if ($this->input->method() === 'post') {
 
-		$this->template->build('admin/areas/form', $data);
-	}
+            $area->name = $this->input->post('name');
+            $area->slug = $this->input->post('slug');
 
-	/**
-	 * Edit widget area
-	 * @access public
-	 * @return void
-	 */
-	public function edit($id = 0)
-	{
-		if ( ! ($id && $area = $this->widgets->get_area($id)))
-		{
-			// @todo: set error
-			return FALSE;
-		}
+            if ($area->save()) {
 
-		$data = array();
+                // Fire an event. A widget area has been updated.
+                Events::trigger('widget_area_updated', $area);
 
-		$this->load->library('form_validation');
-		$this->form_validation->set_rules($this->_validation_rules);
+                $status     = 'success';
+                $message    = lang('success_label');
+            } else {
+                $status     = 'error';
+                $message    = lang('general_error_label');
+            }
 
-		if ($this->form_validation->run())
-		{
-			$input = array(
-				'id'	=> $area->id,
-				'title'	=> $this->input->post('title'),
-				'slug'	=> $this->input->post('slug')
-			);
+            if ($this->input->is_ajax_request()) {
+                $data = array('messages' => array($status => $message));
+                $message = $this->load->view('admin/partials/notices', $data, true);
 
-			if ($this->widgets->edit_area($input))
-			{
-				$area = $this->widgets->get_area($id);
-				$status		= 'success';
-				$message	= lang('success_label');
-			}
-			else
-			{
-				$status		= 'error';
-				$message	= lang('general_error_label');
-			}
+                return $this->template->build_json(array(
+                    'status'    => $status,
+                    'message'   => $message,
+                    'html'      => ($status === 'success' ? $this->index() : null),
+                    'active'    => "#area-{$area->slug} header"
+                ));
+            }
 
-			if ($this->input->is_ajax_request())
-			{
-				$data = array();
+            if ($status === 'success') {
+                $this->session->set_flashdata($status, $message);
+                redirect('admim/widgets/areas');
+            }
 
-				$data['messages'][$status] = $message;
-				$message = $this->load->view('admin/partials/notices', $data, TRUE);
+            $this->template->set('messages', array($status => $message));
 
-				return $this->template->build_json(array(
-					'status'	=> $status,
-					'message'	=> $message,
-					'html'		=> ($status === 'success' ? $this->index() : NULL),
-					'active'	=> (isset($area) && $area ? '#area-' . $area->slug . ' header' : FALSE)
-				));
-			}
+        } elseif (validation_errors()) {
+            if ($this->input->is_ajax_request()) {
+                $status     = 'error';
+                $message    = $this->load->view('admin/partials/notices', array(), true);
 
-			if ($status === 'success')
-			{
-				$this->session->set_flashdata($status, $message);
+                return $this->template->build_json(array(
+                    'status'    => $status,
+                    'message'   => $message
+                ));
+            }
+        }
 
-				redirect('admim/widgets');
-				return;
-			}
+        $this->template
+            ->set('area', $area)
+            ->build('admin/areas/form');
+    }
 
-			$data['messages'][$status] = $message;
-		}
-		elseif (validation_errors())
-		{
-			if ($this->input->is_ajax_request())
-			{
-				$status		= 'error';
-				$message	= $this->load->view('admin/partials/notices', array(), TRUE);
+    /**
+     * Delete an existing widget area
+     *
+     * @return void
+     */
+    public function delete($id = 0)
+    {
+        $area = $this->widgetAreas->find($id);
 
-				return $this->template->build_json(array(
-					'status'	=> $status,
-					'message'	=> $message
-				));
-			}
-		}
+        if ($area->delete()) {
+            // Fire an event. A widget area has been deleted.
+            Events::trigger('widget_area_deleted', $id);
 
-		foreach ($this->_validation_rules as $rule)
-		{
-			$area->{$rule['field']} = set_value($rule['field'], $area->{$rule['field']});
-		}
+            $status = 'success';
+            $message = lang('success_label');
+        } else {
+            $status = 'error';
+            $message = lang('general_error_label');
+        }
 
-		$data['area'] = $area;
+        if ($this->input->is_ajax_request()) {
+            $data = array('messages' => array($status => $message));
+            $message = $this->load->view('admin/partials/notices', $data, true);
 
-		$this->template->build('admin/areas/form', $data);
-	}
+            return $this->template->build_json(array(
+                'status'    => $status,
+                'message'   => $message
+            ));
+        }
 
-	/**
-	 * Delete an existing widget area
-	 * @access public
-	 * @return void
-	 */
-	public function delete($id = 0)
-	{
-		if ($this->widgets->delete_area($id))
-		{
-			$status = 'success';
-			$message = lang('success_label');
-		}
-		else
-		{
-			$status = 'error';
-			$message = lang('general_error_label');
-		}
-
-		if ($this->input->is_ajax_request())
-		{
-			$data = array();
-
-			$data['messages'][$status] = $message;
-			$message = $this->load->view('admin/partials/notices', $data, TRUE);
-
-			return $this->template->build_json(array(
-				'status'	=> $status,
-				'message'	=> $message
-			));
-		}
-
-		$this->session->set_flashdata($status, $message);
-		redirect('admin/widgets');
-	}
+        $this->session->set_flashdata($status, $message);
+        redirect('admin/widgets');
+    }
 
 }

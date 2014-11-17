@@ -12,28 +12,32 @@
  * @filesource
  */
 
-$lang['buttons.submit']		= 'Išsaugoti';
-$lang['buttons.cancel']		= 'Atšaukti';
-$lang['buttons.upload']		= 'Įkelti';
-$lang['buttons.save']		= 'Išaugoti';
-$lang['buttons.save_exit']	= 'Išaugoti &amp; išeiti';
-$lang['buttons.delete']		= 'Ištrinti';
-$lang['buttons.publish']	= 'Publikuoti';
-$lang['buttons.approve']	= 'Patvirtinti';
-$lang['buttons.unapprove']	= 'Nepatvirtinti';
-$lang['buttons.install']	= 'Instaliuoti';
-$lang['buttons.uninstall']	= 'Uninstall'; #translate
-$lang['buttons.enable']		= 'Enable'; #translate
-$lang['buttons.disable'] 	= 'Disable'; #translate
-$lang['buttons.yes']		= 'Taip';
-$lang['buttons.no']			= 'Ne';
-$lang['buttons.activate']   = 'Aktyvuoti';
-$lang['buttons.deactivate']	= 'Deactivate'; #translate
-$lang['buttons.preview']	= 'Peržiūra'; #translate
-$lang['buttons.close']		= 'Uždaryti'; #translate
-$lang['buttons.edit']		= 'Redaguoti'; #translate
-$lang['buttons.clone']		= 'Klonuoti'; #translate
-$lang['buttons.re-index']	= 'Re-index'; #translate
-$lang['buttons.copy']		= 'Kopijuoti'; #translate
+$lang['buttons:submit']		= 'Pateikti';
+$lang['buttons:cancel']		= 'Atšaukti';
+$lang['buttons:upload']		= 'Įkelti';
+$lang['buttons:save']		= 'Išsaugoti';
+$lang['buttons:save_exit']	= 'Išsaugoti ir išeiti';
+$lang['buttons:save_continue']	= 'Save &amp; Continue';
+$lang['buttons:save_create']	= 'Save &amp; Create';
+$lang['buttons:delete']		= 'Ištrinti';
+$lang['buttons:publish']	= 'Publikuoti';
+$lang['buttons:approve']	= 'Patvirtinti';
+$lang['buttons:unapprove']	= 'Nepatvirtinti';
+$lang['buttons:install']	= 'Įdiegti';
+$lang['buttons:uninstall']	= 'Išdiegti';
+$lang['buttons:enable']		= 'Įjungti';
+$lang['buttons:disable'] 	= 'Išjungti';
+$lang['buttons:yes']		= 'Taip';
+$lang['buttons:no']			= 'Ne';
+$lang['buttons:activate']   = 'Aktyvuoti';
+$lang['buttons:deactivate']	= 'Deaktyvuoti';
+$lang['buttons:preview']	= 'Peržiūra';
+$lang['buttons:close']		= 'Uždaryti';
+$lang['buttons:edit']		= 'Redaguoti';
+$lang['buttons:clone']		= 'Klonuoti';
+$lang['buttons:re-index']	= 'Perindeksuoti';
+$lang['buttons:copy']		= 'Kopijuoti';
+$lang['buttons:filter']		= 'Filtruoti';
+$lang['buttons:clear']		= 'Valyti';
 
 /* End of file buttons_lang.php */

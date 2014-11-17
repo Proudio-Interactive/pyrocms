@@ -1,43 +1,41 @@
 # PyroCMS Community Edition
 
-* [Website](http://pyrocms.com/)
-* [Documentation](http://pyrocms.com/docs)
+[![Build Status](https://secure.travis-ci.org/pyrocms/pyrocms.png?branch=2.3/develop)](https://travis-ci.org/pyrocms/pyrocms)
+
+* [Website](https://www.pyrocms.com/)
+* [Documentation](https://www.pyrocms.com/documentation)
 * [License](http://pyrocms.com/legal/license)
-* [Forums](http://pyrocms.com/forums)
-* Version: 1.3.2
+* [Forums](http://forum.pyrocms.com)
+* Version: 2.3.0-beta1
 
 ## Team
 
+* [Jerel Unruh](http://jerel.co/)
 * [Phil Sturgeon](http://philsturgeon.co.uk/)
-* [Eric Barnes](http://ericlbarnes.com/)
-* [Stephen Cozart](http://twitter.com/stephencozart)
-* [Jerel Unruh](http://unruhdesigns.com/)
+* [Ryan Thompson](http://aiwebsystems.com/)
+* [Osvaldo Brignoni](https://github.com/obrignoni)
 
 ## Description
 
-PyroCMS is a CMS built using the CodeIgniter PHP framework. Using an MVC architecture
-it was built with modularity in mind. Lightweight, themeable and dynamic.
+PyroCMS is an MVC PHP Content Management System built to be easy to use, theme and develop with. It is used by individuals and organizations of all sizes around the world.
 
 PyroCMS Community Edition is free to use, redistribute and/or modify for any purpose whether personal or commercial however you must retain the copyright in your source code and in the footer of the administration.
 
-
 ## Installation
 
-Run http://example.com/installer to run the web-based installation script.
+* [Documentation: Getting Started](http://docs.pyrocms.com/2.3/manual/getting-started)
 
+**tl;dr:** Run http://example.com/installer to run the web-based installation script.
 
 ## Upgrading
 
-You no longer need to do anything to upgrade the database. To upgrade the files simply backup the following files then replace system/cms:
-
-	system/cms/config/config.php
-	system/cms/config/database.php
-
+* [Upgrading v2.2.x to v2.3.0](http://docs.pyrocms.com/2.2/manual/reference/upgrade-guides/upgrade-2-2-to-2-3-0)
+* [Upgrading v2.1.x to v2.2.0](http://docs.pyrocms.com/2.2/manual/reference/upgrade-guides/upgrade-2-1-to-2-2-0)
 
 ## Bugs & Feature Requests
 
-[Issue tracker](http://github.com/pyrocms/pyrocms/issues)
-[Forum](http://www.pyrocms.com/forums)
+* [Issue tracker](http://github.com/pyrocms/pyrocms/issues)
+* [Forum](http://forum.pyrocms.com)
 
 Before reporting bugs or requesting any features, please check that it does not already exist.
 
@@ -53,12 +51,21 @@ It's strongly recommended that you download the [git-flow client](https://github
 
 ### Contributors
 
-* Lee Tengum
+* [Matiss Janis Aboltins](http://www.mja.lv/)
+* [Lee Tengum](http://twitter.com/thatleeguy)
 * [BenneX](http://github.com/BenneX)
 * [Colin Williams](http://williamsconcepts.com/)
 * [Yorick Peterse](http://www.yorickpeterse.com/)
 * [Dan Horrigan](http://dhorrigan.com/)
 * [Ben Edmunds](http://benedmunds.com/)
+* [Eric Barnes](http://ericlbarnes.com/)
+* [Stephen Cozart](http://twitter.com/stephencozart)
+* [Matt Frost](http://shortwhitebaldguy.com)
+* [Ryan Thompson](http://aiwebsystems.com)
+* [Scott Parry](http://ikreativ.com/)
+* [Steve Williamson](http://sjdub.com)
+* [Andrew Smith](http://silentworks.co.uk)
+* [Dave Shoreman](http://codeM0nK3Y.com/)
 
 Think you should be on this list? Add yourself in the next pull request you submit.
 
@@ -67,13 +74,22 @@ Think you should be on this list? Add yourself in the next pull request you subm
 ### Translators
 
 * [Demostenes Garcia](http://www.demogar.com/) Spanish
-* [Frederic Quie](http://www.bleekom.org/) French
+* [Frederic Quie](http://www.bleekom.org/) & [Khalil Tabbal](http://www.khalil-tabbal.com) French
 * [TheLoops](http://codeigniter.com/forums/member/62232/) German
 * [Bartosz Majewski](http://404design.pl/) Polish
 * [diederikeijgelaar](http://github.com/diederikeijgelaar) Dutch
 * [okhayat](http://webymaster.com/) Arabic
 * [DarkPreacher](http://darklab.ru) Russian
 * [Marcos Coelho](http://marcoscoelho.com/) Portuguese Brazilian
+* [Miguel Justo](http://migueljusto.net/) Portuguese Portugal
 * [imamo](http://www.imamo.si/) Slovenian
 * [Petsagourakis George](https://github.com/petsagouris) Greek
 * [Mikael Kundert](https://github.com/mikaelkundert) Finnish
+* [Jack Sun](http://www.omatic.com.tw/) Chinese Traditional
+* [Kefeng Deng](http://www.51any.com/) Chinese Simplified
+* [Toni Haryanto](http://toniharyanto.cs.upi.edu/) Indonesian
+* [Nateetorn Lertkhonsan](http://twitter.com/ikwannnnn) Thai
+* [Christian Giupponi](https://github.com/ChristianGiupponi) Italian
+* [Alireza Jahandideh (Yohan)](http://twitter.com/AlirezaJahandid) Persian(Farsi)
+* [huglester](http://webas.lt/) Lithuanian
+* [Chanthoeun Kim](http://pyrocms-cambodia.com/) Cambodia (Khmer)

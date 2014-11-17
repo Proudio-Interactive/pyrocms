@@ -1,5 +1,19 @@
 <?php
 
+# If you have already installed then delete this
+if ( ! file_exists('system/cms/config/database.php')) {
+	
+	// Make sure we've not already tried this
+	if (strpos($_SERVER['REQUEST_URI'], 'installer/')) {
+		header('Status: 404');
+		exit('PyroCMS is missing system/cms/config/database.php and cannot find the installer folder. Does your server have permission to access these files?');
+	}
+	
+	// Otherwise go to installer
+	header('Location: '.rtrim($_SERVER['REQUEST_URI'], '/').'/installer/');
+	exit;
+}
+
 /*
  *---------------------------------------------------------------
  * APPLICATION ENVIRONMENT
@@ -11,44 +25,19 @@
  *
  * This can be set to anything, but default usage is:
  *
- *     development
- *     testing
+ *     local
+ *     staging
  *     production
  *
  * NOTE: If you change these, also change the error_reporting() code below
  *
  */
 
-// Local: localhost or local.example.com
-if ($_SERVER['SERVER_NAME'])
-{
-	if ($_SERVER['SERVER_NAME'] == 'localhost' OR strpos($_SERVER['SERVER_NAME'], 'local.') === 0)
-	{
-		define('ENVIRONMENT', 'local');
-	}
+define('PYRO_DEVELOPMENT', 'development');
+define('PYRO_STAGING', 'staging');
+define('PYRO_PRODUCTION', 'production');
 
-	// Development: dev.example.com
-	elseif (strpos($_SERVER['SERVER_NAME'], 'dev.') === 0)
-	{
-		define('ENVIRONMENT', 'dev');
-	}
-
-	// Quality Assurance: qa.example.com
-	elseif (strpos($_SERVER['SERVER_NAME'], 'qa.') === 0)
-	{
-		define('ENVIRONMENT', 'qa');
-	}
-
-	// Live: example.com
-	else
-	{
-		define('ENVIRONMENT', 'live');
-	}
-}
-else
-{
-	define('ENVIRONMENT', 'local');
-}
+define('ENVIRONMENT', getenv('PYRO_ENV') ?: PYRO_DEVELOPMENT);
 
 /*
  *---------------------------------------------------------------
@@ -56,24 +45,14 @@ else
  *---------------------------------------------------------------
  *
  * Different environments will require different levels of error reporting.
- * By default development will show errors but testing and live will hide them.
+ * The development environment will show errors by default.
  */
 
-	switch (ENVIRONMENT)
-	{
-		case 'local':
-		case 'dev':
-			error_reporting(E_ALL);
-			ini_set('display_errors', 1);
-		break;
-
-		case 'qa':
-		case 'live':
-			error_reporting(0);
-		break;
-
-		default:
-			exit('The application environment is not set correctly.');
+	if (ENVIRONMENT === PYRO_DEVELOPMENT or getenv('PYRO_DEBUG') === 'on') {
+		error_reporting(-1);
+		ini_set('display_errors', true);
+	} else {
+		ini_set('display_errors', false);
 	}
 	
 /*
@@ -94,11 +73,9 @@ else
 	@ini_set('cgi.fix_pathinfo', 0);
 	
 	// PHP 5.3 will BITCH without this
-	if(ini_get('date.timezone') == '')
-	{
-		date_default_timezone_set('GMT');
+	if (ini_get('date.timezone') == '') {
+		date_default_timezone_set('UTC');
 	}
-
 
 /*
 |---------------------------------------------------------------
@@ -145,37 +122,6 @@ else
  *
  */
 	$addon_folder = 'addons';
-
-/*
- * --------------------------------------------------------------------
- * DEFAULT CONTROLLER
- * --------------------------------------------------------------------
- *
- * Normally you will set your default controller in the routes.php file.
- * You can, however, force a custom routing by hard-coding a 
- * specific controller class/function here.  For most applications, you
- * WILL NOT set your routing here, but it's an option for those 
- * special instances where you might want to override the standard
- * routing in a specific front controller that shares a common CI installation.
- *
- * IMPORTANT:  If you set the routing here, NO OTHER controller will be
- * callable. In essence, this preference limits your application to ONE
- * specific controller.  Leave the function name blank if you need
- * to call functions dynamically via the URI.
- *
- * Un-comment the $routing array below to use this feature
- *
- */
- 	// The directory name, relative to the "controllers" folder.  Leave blank
- 	// if your controller is not in a sub-folder within the "controllers" folder
-	// $routing['directory'] = '';
-	
-	// The controller class file name.  Example:  Mycontroller.php
-	// $routing['controller'] = '';
-	
-	// The controller function you wish to be called. 
-	// $routing['function']	= '';
-
 
 /*
  * -------------------------------------------------------------------
@@ -230,26 +176,14 @@ else
 	// The name of THIS file
 	define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 
-	// The PHP file extension
-	define('EXT', '.php');
-
  	// Path to the system folder
 	define('BASEPATH', str_replace("\\", "/", $system_path));
 	
 	// The site slug: (example.com)
-	define('SITE_SLUG', preg_replace('/^www\./', '', $_SERVER['SERVER_NAME']));
+	define('SITE_DOMAIN', $_SERVER['HTTP_HOST']);
 
  	// This only allows you to change the name. ADDONPATH should still be used in the app
 	define('ADDON_FOLDER', $addon_folder.'/');
-	
-	// The site ref. Used for building site specific paths
-	define('SITE_REF', 'default');
-					
-	// Path to uploaded files for this site
-	define('UPLOAD_PATH', 'uploads/'.SITE_REF.'/');
-					
-	// Path to the addon folder for this site
-	define('ADDONPATH', ADDON_FOLDER.SITE_REF.'/');
 	
 	// Path to the addon folder that is shared between sites
 	define('SHARED_ADDONPATH', 'addons/shared_addons/');
@@ -258,23 +192,50 @@ else
 	define('FCPATH', str_replace(SELF, '', __FILE__));
 	
 	// Name of the "system folder"
-	define('SYSDIR', end(explode('/', trim(BASEPATH, '/'))));		
-
+	$parts = explode('/', trim(BASEPATH, '/'));
+	define('SYSDIR', end($parts));
+	unset($parts);
 
 	// The path to the "application" folder
-//	if (is_dir($application_folder))
-//	{
-		define('APPPATH', $application_folder.'/');
-//	}
-//	else
-//	{
-//		if ( ! is_dir(BASEPATH.$application_folder.'/'))
-//		{
-//			exit("Your application folder path does not appear to be set correctly. Please open the following file and correct this: ".SELF);
-//		}
-//
-//		define('APPPATH', BASEPATH.$application_folder.'/');
-//	}
+	define('APPPATH', $application_folder.'/');
+	
+	// Path to the views folder
+	define ('VIEWPATH', APPPATH.'views/' );
+	
+/*
+ *---------------------------------------------------------------
+ * DEMO
+ *---------------------------------------------------------------
+ *
+ * Should PyroCMS run as a demo, meaning no destructive actions
+ * can be taken such as removing admins or changing passwords?
+ *
+ */
+
+    define('PYRO_DEMO', (file_exists(FCPATH.'DEMO')));
+
+/*
+ * --------------------------------------------------------------------
+ * LOAD THE COMPOSER AUTOLOADER
+ * --------------------------------------------------------------------
+ *
+ * ...and it will take care of our classes
+ *
+ */
+require_once FCPATH.'system/vendor/autoload.php';
+
+/*
+ * --------------------------------------------------------------------------
+ * SETUP PATCHWORK UTF-8 HANDLING
+ * --------------------------------------------------------------------------
+ *
+ * The Patchwork library provides solid handling of UTF-8 strings as well
+ * as provides replacements for all mb_* and iconv type functions that
+ * are not available by default in PHP. We'll setup this stuff here.
+ *
+*/
+
+Patchwork\Utf8\Bootup::initAll();
 
 /*
  * --------------------------------------------------------------------
@@ -284,6 +245,6 @@ else
  * And away we go...
  *
  */
-require_once BASEPATH.'core/CodeIgniter'.EXT;
+require_once BASEPATH.'core/CodeIgniter.php';
 
 /* End of file index.php */

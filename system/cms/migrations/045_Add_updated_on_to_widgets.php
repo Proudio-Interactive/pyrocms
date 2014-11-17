@@ -1,14 +1,14 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Migration_Add_updated_on_to_widgets extends CI_Migration {
-
+class Migration_Add_updated_on_to_widgets extends CI_Migration
+{
 	public function up()
 	{
 		$this->dbforge->add_column('widgets', array(
 			'updated_on' => array(
 				'type'			=> 'int',
 				'constraint'	=> 11,
-				'null'			=> FALSE,
+				'null'			=> false,
 				'default'		=> 0
 			)
 		));

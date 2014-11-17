@@ -1,4 +1,6 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php
+
+use Pyro\Support\Contracts\ArrayableInterface;
 
 /**
  * CodeIgniter Dwoo Parser Class
@@ -9,208 +11,182 @@
  * @license	 http://philsturgeon.co.uk/code/dbad-license
  * @link		http://philsturgeon.co.uk/code/codeigniter-dwoo
  */
+class MY_Parser extends CI_Parser
+{
+    public function __construct()
+    {
+        parent::__construct();
 
-class MY_Parser extends CI_Parser {
+        $this->parser = new Lex\Parser;
+    }
 
-	private $_ci;
+    /**
+     *  Parse a view file
+     *
+     * Parses pseudo-variables contained in the specified template,
+     * replacing them with the data in the second param
+     *
+     * @param	string
+     * @param	array
+     * @param	bool
+     * @return	string
+     */
+    public function parse($template, $data = array(), $return = false, $is_include = false, $streams_parse = array(), $include_cached_vars = true)
+    {
+        $string = ci()->load->view($template, $data, true);
 
-	function __construct($config = array())
-	{
-		$this->_ci = & get_instance();
-	}
+        return $this->_parse($string, $data, $return, $is_include, $streams_parse, $include_cached_vars);
+    }
 
-	// --------------------------------------------------------------------
+    /**
+     *  String parse
+     *
+     * Parses pseudo-variables contained in the string content,
+     * replacing them with the data in the second param
+     *
+     * @param	string
+     * @param	array
+     * @param	bool
+     * @return	string
+     */
+    public function parse_string($string, $data = array(), $return = false, $is_include = false, $streams_parse = array(), $include_cached_vars = true)
+    {
+        return $this->_parse($string, $data, $return, $is_include, $streams_parse, $include_cached_vars);
+    }
 
-	/**
-	 *  Parse a view file
-	 *
-	 * Parses pseudo-variables contained in the specified template,
-	 * replacing them with the data in the second param
-	 *
-	 * @access	public
-	 * @param	string
-	 * @param	array
-	 * @param	bool
-	 * @return	string
-	 */
-	function parse($template, $data = array(), $return = FALSE, $is_include = FALSE)
-	{
-		$string = $this->_ci->load->view($template, $data, TRUE);
+    /**
+     *  Parse
+     *
+     * Parses pseudo-variables contained in the specified template,
+     * replacing them with the data in the second param
+     *
+     * @param	string
+     * @param	array
+     * @param	bool
+     * @return	string
+     */
+    protected function _parse($string, $data, $return = false, $is_include = false, $streams_parse = array(), $include_cached_vars = true)
+    {
+        // Start benchmark
+        ci()->benchmark->mark('parse_start');
 
-		return $this->_parse($string, $data, $return, $is_include);
-	}
+        // Convert from object to array
+        $data = $this->toArray($data);
 
-	// --------------------------------------------------------------------
+        // Include cached vars too?
+        if ($include_cached_vars)
+            $data = array_merge($data, ci()->load->_ci_cached_vars);
 
-	/**
-	 *  String parse
-	 *
-	 * Parses pseudo-variables contained in the string content,
-	 * replacing them with the data in the second param
-	 *
-	 * @access	public
-	 * @param	string
-	 * @param	array
-	 * @param	bool
-	 * @return	string
-	 */
-	function parse_string($string, $data = array(), $return = FALSE, $is_include = FALSE)
-	{
-		return $this->_parse($string, $data, $return, $is_include);
-	}
+        if ($streams_parse and isset($streams_parse['stream']) and isset($streams_parse['namespace'])) {
+            // In some very rare cases (mainly in the pages module), we need to
+            // change the field that is being passed to plugin_override() as row_id.
+            // This is where that happens.
+            $id_name = (isset($streams_parse['id_name']) and $streams_parse['id_name']) ? $streams_parse['id_name'] : 'id';
 
-	// --------------------------------------------------------------------
+            ci()->load->driver('Streams');
+            $parsed = ci()->streams->parse->parse_tag_content($string, $data, $streams_parse['stream'], $streams_parse['namespace'], false, null, $id_name);
+        } else {
+            $parser = new Lex\Parser();
+            $parser->scopeGlue(':');
+            $parser->cumulativeNoparse(true);
+            $parsed = $parser->parse($string, $data, array($this, 'parser_callback'));
+        }
 
-	/**
-	 *  Parse
-	 *
-	 * Parses pseudo-variables contained in the specified template,
-	 * replacing them with the data in the second param
-	 *
-	 * @access	public
-	 * @param	string
-	 * @param	array
-	 * @param	bool
-	 * @return	string
-	 */
-	function _parse($string, $data, $return = FALSE, $is_include = FALSE)
-	{
-		// Start benchmark
-		$this->_ci->benchmark->mark('parse_start');
+        // Finish benchmark
+        ci()->benchmark->mark('parse_end');
 
-		// Convert from object to array
-		if ( ! is_array($data))
-		{
-			$data = (array) $data;
-		}
+        // Return results or not ?
+        if ($return) {
+            return $parsed;
+        }
 
-		$data = array_merge($data, $this->_ci->load->_ci_cached_vars);
+        ci()->output->append_output($parsed);
+    }
 
-		// TAG SUPPORT
-		if ( ! isset($this->_ci->tags))
-		{
-			$this->_ci->load->library('tags');
-			$this->_ci->tags->set_trigger(config_item('tags_trigger').':');
-		}
+    /**
+     * Callback from template parser
+     *
+     * @param	array
+     * @return	 mixed
+     */
+    public function parser_callback($plugin, $attributes, $content)
+    {
+        ci()->load->library('plugins');
 
-		if (isset($data['_tags']) && is_array($data['_tags']))
-		{
-			foreach ($data['_tags'] as $method => $value)
-			{
-				$method_name = 'set_' . $method;
+        $return_data = ci()->plugins->locate($plugin, $attributes, $content);
 
-				if (method_exists($this->_ci->tags, $method_name))
-				{
-					call_user_func(array($this->_ci->tags, $method_name), $value);
-				}
-			}
+        if (is_array($return_data) && $return_data) {
+            if ( ! $this->isMulti($return_data)) {
+                $return_data = $this->makeMulti($return_data);
+            }
 
-			unset($data['_tags']);
-		}
+            // $content = $data['content']; # TODO What was this doing other than throw warnings in 2.0?
+            $parsed_return = '';
 
-		$parsed = $this->_ci->tags->parse($string, $data, array($this, 'parser_callback'));
-		// END TAG SUPPORT
+            $parser = new Lex\Parser();
+            $parser->scopeGlue(':');
 
-		// Finish benchmark
-		$this->_ci->benchmark->mark('parse_end');
+            foreach ($return_data as $result) {
+                $parsed_return .= $parser->parse($content, $result, array($this, 'parser_callback'));
+            }
 
-		// Return results or not ?
-		if ( ! $return)
-		{
-			$this->_ci->output->append_output($parsed['content']);
-			return;
-		}
+            unset($parser);
 
-		return $parsed['content'];
-	}
+            $return_data = $parsed_return;
+        }
 
-	// --------------------------------------------------------------------
+        return $return_data ?: null;
+    }
 
-	/**
-	 * Callback from template parser
-	 *
-	 * @param	array
-	 * @return	 mixed
-	 */
-	public function parser_callback($data)
-	{
-		$this->_ci->load->library('plugins');
+    // ------------------------------------------------------------------------
 
-		$return_data = $this->_ci->plugins->locate($data);
+    /**
+     * Ensure we have a multi array
+     *
+     * @param	array
+     * @return	 int
+     */
+    private function isMulti($array)
+    {
+        return (count($array) != count($array, 1));
+    }
 
-		if (is_array($return_data) && $return_data)
-		{
-			if ( ! $this->_is_multi($return_data))
-			{
-				$return_data = $this->_make_multi($return_data);
-			}
+    // --------------------------------------------------------------------
 
-			$content = $data['content'];
-			$parsed_return = '';
+    /**
+     * Forces a standard array in multidimensional.
+     *
+     * @param	array
+     * @param	int		Used for recursion
+     * @return	array	The multi array
+     */
+    private function makeMulti($flat, $i=0)
+    {
+        $return = array();
+     
+        foreach ($flat as $item => $value) {
 
-			$simpletags = new Tags;
-			$simpletags->set_trigger(config_item('tags_trigger').':');
+            if ($value instanceof ArrayableInterface) {
+                $return[$item] = $value->toArray();
+            }
+            elseif (is_object($value)) {
+                $return[$item] = (array) $value;
+            } else {
+                $return[$i][$item] = $value;
+            }
+        }
+        return $return;
+    }
 
-			foreach ($return_data as $result)
-			{
-				if ($data['skip_content'])
-				{
-					$simpletags->set_skip_content($data['skip_content']);
-				}
-
-				$parsed = $simpletags->parse($content, $result, array($this, 'parser_callback'));
-				$parsed_return .= $parsed['content'];
-			}
-
-			unset($simpletags);
-
-			$return_data = $parsed_return;
-		}
-
-		return $return_data ? $return_data : NULL;
-	}
-
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Ensure we have a multi array
-	 *
-	 * @param	array
-	 * @return	 int
-	 */
-	private function _is_multi($array)
-	{
-		return (count($array) != count($array, 1));
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Forces a standard array in multidimensional.
-	 * 
-	 * @param	array
-	 * @param	int		Used for recursion
-	 * @return	array	The multi array
-	 */
-	private function _make_multi($flat, $i=0)
-	{
-		$multi = array();
-		$return = array();
-		foreach ($flat as $item => $value)
-		{
-			if (is_object($value))
-			{
-				$return[$item] = (array) $value;
-			}
-			else
-			{
-				$return[$i][$item] = $value;
-			}
-		}
-		return $return;
-	}
+    /**
+     * toArray for output (recursively)
+     * @param  mixed $data 
+     * @return mixed        String or array
+     */
+    public function toArray($data)
+    {
+        return $this->parser->toArray($data);
+    }
 }
-
-// END MY_Parser Class
 
 /* End of file MY_Parser.php */

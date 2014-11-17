@@ -1,483 +1,573 @@
-<?php  if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php
+
+use Pyro\Module\Addons\ThemeManager;
+use Pyro\Module\Addons\WidgetManager;
+
+// This is for using the the settings library in PyroCMS when installing.
+// This is a copy of the function that exists in system/cms/core/My_Controller.php
+function ci()
+{
+    return get_instance();
+}
+
 /**
- * @author 		Yorick Peterse - PyroCMS development team
- * @package		PyroCMS
- * @subpackage	Installer
- * @category	Application
- * @since 		v0.9.6.2
- *
  * Installer controller.
+ *
+ * @author  PyroCMS Dev Team
+ * @package PyroCMS\Installer\Controllers
+ *
+ * @property CI_Loader          $load
+ * @property CI_Parser          $parser
+ * @property CI_Input           $input
+ * @property CI_Session         $session
+ * @property CI_Form_validation $form_validation
+ * @property CI_Lang            $lang
+ * @property CI_Config          $config
+ * @property CI_Router          $router
+ * @property Module_import      $module_import
+ * @property Installer_lib      $installer_lib
  */
 class Installer extends CI_Controller
 {
-	/**
-	 * Array of languages supported by the installer
-	 */
-	private $languages	= array ('arabic', 'brazilian', 'english', 'dutch', 'french', 'german', 'polish', 'chinese_traditional', 'slovenian', 'spanish', 'russian', 'greek', 'lithuanian');
+    /** @var array Languages supported by the installer */
+    private $languages = array();
 
-	/**
-	 * Array containing the directories that need to be writeable
-	 *
-	 * @access private
-	 * @var array
-	 */
-	private $writeable_directories = array(
-		'system/cms/cache',
-		'system/cms/config',
-		'addons',
-		'uploads'
-	);
+    /** @var array Directories that need to be writable */
+    private $writable_directories = array(
+        'system/cms/cache',
+        'system/cms/config',
+        'addons',
+        'assets/cache',
+        'uploads',
+        'system/cms/modules/streams_core/models',
+    );
 
-	/**
-	 * Array containing the files that need to be writeable
-	 *
-	 * @access private
-	 * @var array
-	 */
-	private $writeable_files = array(
-		'system/cms/config/config.php'
-	);
+    /** @var string The translations directory */
+    private $languages_directory = '../language/';
 
-	/**
-	 * Constructor method
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
+    /** @var array The view variables for creating the language menu */
+    private $language_nav = array();
 
-		// Load the config file that contains a list of supported servers
-		$this->load->config('servers');
+    /**
+     * At start this controller should:
+     * 1. Load the array of supported servers
+     * 2. Set the language used by the user.
+     * 3. Load the language files.
+     * 4. Load the Form validation library.
+     */
+    public function __construct()
+    {
+        parent::__construct();
 
-		// Sets the language
-		$this->_set_language();
+        // Load the config file that contains a list of supported servers
+        $this->load->config('servers');
 
-		// Load form validation
-		$this->load->library('form_validation');
-	}
+        // Get the supported languages
+        $this->_discover_languages();
 
-	/**
-	 * Index method
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function index()
-	{
-		// The index function doesn't do that much itself, it only displays a view file with 3 buttons : Install, Upgrade and Maintenance.
-		$data['page_output'] = $this->parser->parse('main', $this->lang->language, TRUE);
+        if ($this->session->userdata('language')) {
+            $this->config->set_item('language', $this->session->userdata('language'));
+        }
 
-		// Load the view file
-		$this->load->view('global',$data);
-	}
+        $current_language = $this->config->item('language');
 
-	/**
-	 * Pre installation
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function step_1()
-	{
-		// Save this junk for later
-		$this->session->set_userdata(array(
-			'hostname' => $this->input->post('hostname'),
-			'username' => $this->input->post('username'),
-			'password' => $this->input->post('password'),
-			'port' => $this->input->post('port'),
-			'http_server' => $this->input->post('http_server')
-		));
+        // Load the global installer language file
+        $this->lang->load('installer');
 
-		// Set rules
-		$this->form_validation->set_rules(array(
-			array(
-				'field' => 'hostname',
-				'label'	=> 'lang:server',
-				'rules'	=> 'trim|required|callback_test_db_connection'
-			),
-			array(
-				'field' => 'username',
-				'label'	=> 'lang:username',
-				'rules'	=> 'trim|required'
-			),
-			array(
-				'field' => 'password',
-				'label'	=> 'lang:password',
-				'rules'	=> 'trim'
-			),
-			array(
-				'field' => 'port',
-				'label'	=> 'lang:portnr',
-				'rules'	=> 'trim|required'
-			),
-			array(
-				'field' => 'http_server',
-				'label'	=> 'lang:server_settings',
-				'rules'	=> 'trim|required'
-			)
-		));
+        define('SITE_REF', 'default');
 
-		// If the form validation passed
-		if ( $this->form_validation->run() )
-		{
-			// Set the flashdata message
-			$this->session->set_flashdata('message', lang('db_success') );
-			$this->session->set_flashdata('message_type', 'success');
+        // Where is PyroCMS installed?
+        define('PYROPATH', dirname(FCPATH).'/system/cms/');
+        define('ADDONPATH', dirname(FCPATH).'/addons/'.SITE_REF.'/');
+        define('SHARED_ADDONPATH', dirname(FCPATH).'/addons/shared_addons/');
 
-			// Redirect to the second step
-			$this->session->set_userdata('step_1_passed', TRUE);
-			redirect('installer/step_2');
-		}
+        // Let us load stuff from the main application
+        $this->load->add_package_path(PYROPATH);
 
-		// Get supported servers
-		$supported_servers 		= $this->config->item('supported_servers');
-		$data->server_options 	= array();
+        // set the supported languages to be saved in Settings for emails and .etc
+        // modules > settings > details.php uses this
+        require_once(PYROPATH.'/config/language.php');
 
-		foreach($supported_servers as $key => $server)
-		{
-			$data->server_options[$key] = $server['name'];
-		}
+        // Check that the language configuration has been loaded.
+        isset($config) or exit('Could not load language configuration.');
 
-		// Get the port from the session or set it to the default value when it isn't specified
-		$data->port = $this->session->userdata('port') ? $this->session->userdata('port') : 3306;
+        // Define the default language code as constant
+        define('DEFAULT_LANG', $config['default_language']);
 
-		// Load language labels
-		$data = array_merge((array) $data,$this->lang->language);
+        $image_url = base_url('assets/img/flags/__CODE__.gif');
 
-		// Load the view file
-		$this->load->view('global', array(
-			'page_output' => $this->parser->parse('step_1', $data, TRUE)
-		));
-	}
+        // Work out some misrepresented language codes to specific language flags
+        $flag_exchange = array(
+            'english' => 'gb',
+            'chinese_simplified' => 'cn',
+            'chinese_traditional' => 'cn',
+            'danish' => 'dk',
+            'czech' => 'cz',
+        );
 
-	/**
-	 * Function to test the DB connection (used for the form validation)
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	function test_db_connection()
-	{
-		if ( ! $this->installer_lib->test_db_connection() )
-		{
-			$this->form_validation->set_message('test_db_connection', lang('db_failure') . mysql_error());
-			return FALSE;
-		}
-		else
-		{
-			return TRUE;
-		}
-	}
+        // Generate the language array for the navigation.
+        foreach ($config['supported_languages'] as $code => $info) {
+            // There is a translation available and we haven't already put that in there.
+            if (in_array($info['folder'], $this->languages) && ! array_key_exists($info['folder'], $this->language_nav)) {
+                $this->language_nav[$info['folder']] = array(
+                    'code' => $code,
+                    'folder' => $info['folder'],
+                    'name' => $info['name'],
+                    'action_url' => site_url('installer/change/'.$info['folder']),
+                    'image_url' => str_replace('__CODE__', (in_array($info['folder'], array_keys($flag_exchange))) ? $flag_exchange[$info['folder']] : $code, $image_url),
+                );
+            }
+        }
 
-	/**
-	 * First actual installation step
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function step_2()
-	{
-		// Did the user enter the DB settings ?
-		if ( ! $this->session->userdata('step_1_passed'))
-		{
-			// Set the flashdata message
-			$this->session->set_flashdata('message', lang('step1_failure'));
-			$this->session->set_flashdata('message_type','failure');
+        ksort($this->language_nav);
 
-			// Redirect
-			redirect('');
-		}
+        // Load form validation library
+        $this->load->library('form_validation');
+    }
 
-		// Check the PHP version
-		$data->php_min_version	= '5.2';
-		$data->php_acceptable	= $this->installer_lib->php_acceptable($data->php_min_version);
-		$data->php_version		= $this->installer_lib->php_version;
+    /**
+     * Index method
+     */
+    public function index()
+    {
+        $data = new stdClass;
 
-		// Check the MySQL data
-		$data->mysql->server_version_acceptable = $this->installer_lib->mysql_acceptable('server');
-		$data->mysql->client_version_acceptable = $this->installer_lib->mysql_acceptable('client');
-		$data->mysql->server_version = $this->installer_lib->mysql_server_version;
-		$data->mysql->client_version = $this->installer_lib->mysql_client_version;
+        // TODO No idea why this is here. Potentially lazy passing of data to ajax.php
+        $this->session->set_userdata('http_server', $this->input->post('http_server'));
 
-		// Check the GD data
-		$data->gd_acceptable = $this->installer_lib->gd_acceptable();
-		$data->gd_version = $this->installer_lib->gd_version;
+        $driver    = $this->input->post('db_driver');
+        $port      = $this->input->post('port');
 
-		// Check to see if Zlib is enabled
-		$data->zlib_enabled = $this->installer_lib->zlib_enabled();
+        if ($_POST) {
 
-		// Check to see if Curl is enabled
-		$data->curl_enabled = $this->installer_lib->curl_enabled();
 
-		// Get the server
-		$selected_server = $this->session->userdata('http_server');
-		$supported_servers = $this->config->item('supported_servers');
+            // Set rules
+            $this->form_validation->set_rules(array(
+                array(
+                    'field' => 'db_driver',
+                    'label' => 'lang:db_driver',
+                    'rules' => 'trim|required'
+                ),
+                array(
+                    'field' => 'hostname',
+                    'label'	=> 'lang:server',
+                    'rules'	=> 'trim'.(in_array($driver, array('mysql', 'pgsql')) ? '|required' : '')
+                ),
+                array(
+                    'field' => 'location',
+                    'label' => 'lang:location',
+                    'rules' => 'trim'.(in_array($driver, array('sqlite')) ? '|required' : ''),
+                ),
+                array(
+                    'field' => 'username',
+                    'label'	=> 'lang:username',
+                    'rules' => 'trim'.(in_array($driver, array('mysql', 'pgsql')) ? '|required' : '')
+                ),
+                array(
+                    'field' => 'password',
+                    'label'	=> 'lang:password',
+                    'rules'	=> 'trim'
+                ),
+                array(
+                    'field' => 'port',
+                    'label' => 'lang:port',
+                    'rules'	=> 'trim'.(in_array($driver, array('mysql', 'pgsql')) ? '|required' : '')
+                ),
+                array(
+                    'field' => 'database',
+                    'label' => 'lang:db_database',
+                    'rules' => 'trim'.(in_array($driver, array('mysql', 'pgsql')) ? '|required' : ''),
+                ),
+                array(
+                    'field' => 'http_server',
+                    'label' => 'lang:server_settings',
+                    'rules' => 'trim|required'
+                ),
+            ));
 
-		$data->http_server->supported = $this->installer_lib->verify_http_server($this->session->userdata('http_server'));
-		$data->http_server->name = @$supported_servers[$selected_server]['name'];
+            // If the form validation passed
+            if ($this->form_validation->run()) {
 
-		// Check the final results
-		$data->step_passed = $this->installer_lib->check_server($data);
-		$this->session->set_userdata('step_2_passed', $data->step_passed);
+                try {
 
-		// Load the view files
-		$final_data['page_output'] = $this->load->view('step_2', $data, TRUE);
-		$this->load->view('global',$final_data);
-	}
+                    // Might go horribly wrong
+                    $this->test_db_connection();
 
-	/**
-	 * Another step, yay!
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function step_3()
-	{
-		if ( ! $this->session->userdata('step_1_passed') OR !$this->session->userdata('step_2_passed'))
-		{
-			// Redirect the user back to step 1
-			redirect('installer/step_2');
-		}
+                    // Set the flashdata message
+                    $this->session->set_flashdata('success', lang('db_success'));
 
-		// Load the file helper
-		$this->load->helper('file');
+                    // Redirect to the second step
+                    $this->session->set_userdata('step_1_passed', true);
+                    redirect('installer/step_2');
 
-		// Get the write permissions for the folders
-		foreach($this->writeable_directories as $dir)
-		{
-			@chmod('../'.$dir, 0777);
-			$permissions['directories'][$dir] = is_really_writable('../' . $dir);
-		}
+                } catch (InstallerException $e) {
+                    $data->messages = array('error' => $e->getMessage());
+                }
+            }
+        }
 
-		foreach($this->writeable_files as $file)
-		{
-			@chmod('../'.$file, 0666);
-			$permissions['files'][$file] = is_really_writable('../' . $file);
-		}
+        // Get supported servers
+        $supported_servers      = $this->config->item('supported_servers');
+        $data->server_options   = array();
 
-		// If all permissions are TRUE, go ahead
-		$data->step_passed = !in_array(FALSE, $permissions['directories']) && !in_array(FALSE, $permissions['files']);
-		$this->session->set_userdata('step_3_passed', $data->step_passed);
+        foreach ($supported_servers as $key => $server) {
+            $data->server_options[$key] = $server['name'];
+        }
 
-		// View variables
-		$data->permissions = $permissions;
+        // Get the port from the session or set it to the default value when it isn't specified
+        $data->port = $port;
 
-		// Load the language labels
-		$data = (object) array_merge((array) $data,$this->lang->language);
+        // Check what DB's are available
+        $data->db_drivers = $this->installer_lib->check_db_extensions();
 
-		// Load the view file
-		$final_data['page_output'] = $this->parser->parse('step_3', $data, TRUE);
-		$this->load->view('global', $final_data);
-	}
+        // Work out which DB driver to show as selected
+        $data->selected_db_driver = null;
 
-	/**
-	 * Another step, damn thee steps, damn thee!
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function step_4()
-	{
-		if ( ! $this->session->userdata('step_1_passed') OR ! $this->session->userdata('step_2_passed') OR ! $this->session->userdata('step_3_passed'))
-		{
-			// Redirect the user back to step 2
-			redirect('installer/step_2');
-		}
+        if ($this->input->post('db_driver') === null) {
+            foreach (array('sqlite', 'pgsql', 'mysql') as $driver) {
+                if ($data->db_drivers[$driver] === true) {
+                    $data->selected_db_driver = $driver;
+                    break;
+                }
+            }
+        } else {
+            $data->selected_db_driver = $this->input->post('db_driver');
+        }
 
-		// Set rules
-		$this->form_validation->set_rules(array(
-			array(
-				'field' => 'database',
-				'label'	=> 'lang:database',
-				'rules'	=> 'trim|required'
-			),
-			array(
-				'field' => 'site_ref',
-				'label'	=> 'lang:site_ref',
-				'rules'	=> 'trim|required|alpha_dash'
-			),
-			array(
-				'field' => 'user_name',
-				'label'	=> 'lang:username',
-				'rules'	=> 'trim|required'
-			),
-			array(
-				'field' => 'user_firstname',
-				'label'	=> 'lang:first_name',
-				'rules'	=> 'trim|required'
-			),
-			array(
-				'field' => 'user_lastname',
-				'label'	=> 'lang:last_name',
-				'rules'	=> 'trim|required'
-			),
-			array(
-				'field' => 'user_email',
-				'label'	=> 'lang:email',
-				'rules'	=> 'trim|required|valid_email'
-			),
-			array(
-				'field' => 'user_password',
-				'label'	=> 'lang:password',
-				'rules'	=> 'trim|min_length[6]|max_length[20]|required'
-			),
-			array(
-				'field' => 'user_confirm_password',
-				'label'	=> 'lang:conf_password',
-				'rules'	=> 'trim|required|matches[user_password]|callback_attempt_install'
-			)
-		));
+        $this->_render_view('step_1', (array) $data);
+    }
 
-		// If the form validation failed (or did not run)
-		if ($this->form_validation->run() == FALSE)
-		{
-			$final_data['page_output'] = $this->parser->parse('step_4', $this->lang->language, TRUE);
-			$this->load->view('global', $final_data);
-		}
+    /**
+     * Function to test the DB connection (used for the form validation)
+     *
+     * @return bool
+     */
+    protected function test_db_connection()
+    {
+        $db_config = array(
+            'driver'    => $this->input->post('db_driver'),
+            'database'  => $this->input->post('database'),
+            'location'  => $this->input->post('location'),
+            'hostname'  => $this->input->post('hostname'),
+            'port'      => $this->input->post('port'),
+            'username' 	=> $this->input->post('username'),
+            'password' 	=> $this->input->post('password'),
+            'create_db' => $this->input->post('create_db'),
+            'site_ref'  => 'default',
+        );
 
-		// If the form validation passed
-		else
-		{
-			// Success!
-			$this->session->set_flashdata('message', lang('success'));
-			$this->session->set_flashdata('message_type','success');
+        // Store this for later
+        $this->session->set_userdata('db_config', $db_config);
 
-			// Store the default username and password in the session data
-			$this->session->set_userdata('user', array(
-				'user_email'	=> $this->input->post('user_email'),
-				'user_password'	=> $this->input->post('user_password'),
-				'user_firstname'=> $this->input->post('user_firstname'),
-				'user_lastname'	=> $this->input->post('user_lastname')
-			));
+        try {
+            // Create a connection to see if data is correct
+            $this->installer_lib->create_connection($db_config);
+        } catch (Exception $e) {
+            throw new InstallerException(lang('db_failure').$e->getMessage());
+        }
 
-			//define the default user email to be used in the settings module install
-			define('DEFAULT_EMAIL', $this->input->post('user_email'));
+        return true;
+    }
 
-			// Import the modules
-			$this->load->library('module_import');
-			$this->module_import->import_all();
+    /**
+     * First actual installation step
+     */
+    public function step_2()
+    {
+        // Did the user enter the DB settings ?
+        if (! $this->session->userdata('step_1_passed')) {
+            // Set the flashdata message
+            $this->session->set_flashdata('message', lang('step1_failure'));
+            $this->session->set_flashdata('message_type', 'failure');
 
-			// Redirect
-			redirect('installer/complete');
-		}
-	}
+            redirect('');
+        }
 
-	/**
-	 * Attempt to install PyroCMS (used for form validation)
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	function attempt_install()
-	{
-		// If we do not have any validation errors so far
-		if ( ! validation_errors() )
-		{
-			// Let's try to install the system
-			$install_results = $this->installer_lib->install($_POST);
+        $data = new stdClass;
 
-			// Did the install fail?
-			if($install_results['status'] === FALSE)
-			{
-				// Let's tell them why the install failed
-				$this->form_validation->set_message('attempt_install', $this->lang->line('error_'.$install_results['code']) . $install_results['message']);
-				return FALSE;
-			}
+        // Check the PHP version
+        $data->php_acceptable	= $this->installer_lib->php_acceptable();
+        $data->php_version		= PHP_VERSION;
 
-			// If the install did not fail
-			return TRUE;
-		}
-	}
+        // Check the GD data
+        $data->gd_acceptable = $this->installer_lib->gd_acceptable();
+        $data->gd_version = $this->installer_lib->gd_version;
 
-	/**
-	 * We're done, thank god for that
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function complete()
-	{
-		// check if we came from step4
-		if ( ! $this->session->userdata('user'))
-		{
-			redirect(site_url());
-		}
+        // Check to see if Zlib is enabled
+        $data->zlib_enabled = $this->installer_lib->zlib_available();
 
-		$server_name = $this->session->userdata('http_server');
-		$supported_servers = $this->config->item('supported_servers');
+        // Check to see if Curl is enabled
+        $data->curl_enabled = $this->installer_lib->curl_available();
 
-		// Load our user's settings
-		$data = $this->session->userdata('user');
+        // Get the server
+        $selected_server = $this->session->userdata('http_server');
+        $supported_servers = $this->config->item('supported_servers');
 
-		// Load the language labels
-		$data = array_merge((array) $data, $this->lang->language);
+        $data->http_server = new stdClass;
+        $data->http_server->supported = $this->installer_lib->verify_http_server($this->session->userdata('http_server'));
+        $data->http_server->name = @$supported_servers[$selected_server]['name'];
 
-		// Create the admin link
-		$data['website_url'] = 'http://'.$this->input->server('HTTP_HOST').preg_replace('/installer\/index.php$/', '', $this->input->server('SCRIPT_NAME'));
-		$data['control_panel_url'] = $data['website_url'] . ($supported_servers[$server_name]['rewrite_support'] === TRUE ? 'admin' : 'index.php/admin');
+        // Check the final results
+        $data->step_passed = $this->installer_lib->check_server($data);
 
-		// Let's remove our session since it contains data we don't want anyone to see
-		$this->session->sess_destroy();
+        // Skip Step 2 if it passes
+        if ($data->step_passed) {
+            $this->session->set_userdata('step_2_passed', true);
 
-		// Load the view files
-		$data['page_output'] = $this->parser->parse('complete',$data, TRUE);
-		$this->load->view('global',$data);
-	}
+            redirect('installer/step_3');
+        }
 
-	/**
-	 * Changes the active language
-	 *
-	 * @access	public
-	 * @author	jeroenvdgulik
-	 * @since	0.9.8.1
-	 * @param	string $language
-	 * @return	void
-	 */
-	public function change($language)
-	{
-		if (in_array($language, $this->languages))
-		{
-			$this->session->set_userdata('language', $language);
-		}
+        $this->session->set_userdata('step_2_passed', $data->step_passed);
 
-		redirect('installer');
-	}
+        // Load the view files
 
-	/**
-	 * Sets the language and loads the corresponding language files
-	 *
-	 * @access	private
-	 * @author	jeroenvdgulik
-	 * @since	0.9.8.1
-	 * @return	void
-	 */
-	private function _set_language()
-	{
-		// let's check if the language is supported
-		if (in_array($this->session->userdata('language'), $this->languages))
-		{
-			// if so we set it
-			$this->config->set_item('language', $this->session->userdata('language'));
-		}
+        $this->_render_view('step_2', (array) $data);
+    }
 
-		// let's load the language file belonging to the page i.e. method
-		$lang_file = $this->config->item('language') . '/' . $this->router->fetch_method() . '_lang';
-		if (is_file(realpath(dirname(__FILE__) . '/../language/' . $lang_file . EXT)))
-		{
-			$this->lang->load($this->router->fetch_method());
-		}
+    /**
+     * Another step, yay!
+     */
+    public function step_3()
+    {
+        if ( ! $this->session->userdata('step_1_passed') OR ! $this->session->userdata('step_2_passed')) {
+            // Redirect the user back to step 1
+            redirect('installer/step_2');
+        }
 
-		// also we load some generic language labels
-		$this->lang->load('global');
+        // Load the file helper
+        $this->load->helper('file');
 
-		// set the supported languages to be saved in Settings for emails and .etc
-		// modules > settings > details.php uses this
-		require_once(dirname(FCPATH).'/system/cms/config/language.php');
+        // Get the write permissions for the folders
+        $permissions = array();
+        foreach ($this->writable_directories as $dir) {
+            @chmod('../'.$dir, 0777);
+            $permissions['directories'][$dir] = is_really_writable('../'.$dir);
+        }
 
-		define('DEFAULT_LANG', $config['default_language']);
-	}
+        $data = array();
+        // If all permissions are TRUE, go ahead
+        $data['step_passed'] = ! in_array(false, $permissions['directories'], true);
+        $this->session->set_userdata('step_3_passed', $data['step_passed']);
+
+        // Skip Step 2 if it passes
+        if ($data['step_passed']) {
+            $this->session->set_userdata('step_3_passed', true);
+
+            redirect('installer/step_4');
+        }
+
+        // View variables
+        $data['permissions'] = $permissions;
+
+        $this->_render_view('step_3', $data);
+    }
+
+    /**
+     * Another step, damn thee steps, damn thee!
+     */
+    public function step_4()
+    {
+        if (! $this->session->userdata('step_1_passed') OR ! $this->session->userdata('step_2_passed') OR ! $this->session->userdata('step_3_passed')) {
+            // Redirect the user back to step 2
+            redirect('installer/step_2');
+        }
+
+        // Set rules
+        $this->form_validation->set_rules(array(
+            array(
+                'field' => 'user_username',
+                'label' => 'lang:user_name',
+                'rules' => 'trim|required'
+            ),
+            array(
+                'field' => 'user_firstname',
+                'label' => 'lang:first_name',
+                'rules' => 'trim|required'
+            ),
+            array(
+                'field' => 'user_lastname',
+                'label' => 'lang:last_name',
+                'rules' => 'trim|required'
+            ),
+            array(
+                'field' => 'user_email',
+                'label' => 'lang:email',
+                'rules' => 'trim|required|valid_email'
+            ),
+            array(
+                'field' => 'user_password',
+                'label' => 'lang:password',
+                'rules' => 'trim|min_length[6]|max_length[50]|required'
+            ),
+        ));
+
+        // If the form validation failed (or did not run)
+        if ($this->form_validation->run() == false) {
+            $this->_render_view('step_4');
+
+        // If the form validation passed
+        } else {
+            // Grab the connection config from the session
+            $db_config = $this->session->userdata('db_config');
+
+            // First User details
+            $user = array(
+                'username' => $this->input->post('user_username'),
+                'firstname' => $this->input->post('user_firstname'),
+                'lastname' => $this->input->post('user_lastname'),
+                'email' => $this->input->post('user_email'),
+                'password' => $this->input->post('user_password'),
+            );
+
+            // Let's try to install the system with this new PDO instance
+            try {
+
+                // Create the database if that is what they asked us to do
+                if (! empty($db_config['create_db'])) {
+                    // Create an PDO connection and instance
+                    $pdo = $this->installer_lib->create_connection($db_config);
+
+                    // Make the database
+                    $this->installer_lib->create_db($pdo, $db_config['database']);
+                }
+
+                $pdb = $this->installer_lib->install($user, $db_config);
+
+            } catch (InstallerException $e) {
+
+                $this->_render_view('step_4', array(
+                    'messages' => array(
+                        'error' => $e->getMessage(),
+                    )
+                ));
+
+                return;
+            }
+
+            // Success!
+            $this->session->set_flashdata('success', lang('success'));
+
+            // Store the default username and password in the session data
+            $this->session->set_userdata('user', $user);
+
+            // Define the default user email to be used in the settings module install
+            define('DEFAULT_EMAIL', $this->input->post('user_email'));
+
+            // Import the modules
+            $this->load->library('module_import', array(
+                'pdb' => $pdb,
+            ));
+
+            $this->module_import->import_all();
+
+            $themeManager = new ThemeManager();
+            $themeManager->setLocations(array(
+                PYROPATH.'themes/',
+            ));
+
+            $themeManager->registerUnavailableThemes();
+
+            $widgetManager = new WidgetManager();
+            $widgetManager->setLocations(array(
+                PYROPATH.'widgets/',
+            ));
+            $widgetManager->registerUnavailableWidgets();
+
+            redirect('installer/complete');
+        }
+    }
+
+    /**
+     * We're done, thank god for that
+     */
+    public function complete()
+    {
+        // check if we came from step4
+        if ( ! $this->session->userdata('user')) {
+            redirect(site_url());
+        }
+
+        $server_name = $this->session->userdata('http_server');
+        $supported_servers = $this->config->item('supported_servers');
+
+        // Load our user's settings
+        $data = $this->session->userdata('user');
+
+        // Create the admin link
+        $data['website_url'] = 'http://'.$this->input->server('HTTP_HOST').preg_replace('/installer\/index.php$/', '', $this->input->server('SCRIPT_NAME'));
+        $data['control_panel_url'] = $data['website_url'].($supported_servers[$server_name]['rewrite_support'] === true ? 'admin' : 'index.php/admin');
+
+        // Let's remove our session since it contains data we don't want anyone to see
+        $this->session->sess_destroy();
+
+        $this->_render_view('complete', $data);
+    }
+
+    /**
+     * Changes the active language
+     *
+     * @author    jeroenvdgulik
+     * @since     0.9.8.1
+     *
+     * @param string $language
+     */
+    public function change($language)
+    {
+        $this->_discover_languages();
+
+        if (in_array($language, $this->languages)) {
+            $this->session->set_userdata('language', $language);
+        }
+
+        redirect('installer');
+    }
+
+    /**
+     * Set up class properties related to translations.
+     *
+     * Populates the supported languages array and sets the
+     * installer translations directory as an absolute path
+     */
+    private function _discover_languages()
+    {
+        // Convert the translation directory path to absolute
+        if ($this->languages_directory === '../language/') {
+            $this->languages_directory = realpath(dirname(__FILE__).'/'.$this->languages_directory);
+        }
+
+        // Get the supported language array populated
+        if (empty($this->languages)) {
+            foreach (glob($this->languages_directory.'/*', GLOB_ONLYDIR) as $path) {
+                $path = basename($path);
+
+                if ( ! in_array($path, array('.', '..'))) {
+                    $this->languages[] = $path;
+                }
+            }
+        }
+    }
+
+    /**
+     * Parse the view replacing the variables found in it.
+     *
+     * @param string $view    The name of the view.
+     * @param array  $any,... optional, Unlimited number of variables to merge with the standard controller view variables.
+     *
+     * @return string|void
+     */
+    private function _render_view($view)
+    {
+        $args = array_slice(func_get_args(), 1);
+        $out = array_merge($this->lang->language, array('language_nav' => $this->language_nav));
+
+        foreach ($args as $arg) {
+            if (is_array($arg)) {
+                $out = array_merge($out, $arg);
+            }
+        }
+
+        $this->load->view('global', array(
+            'page_output' => $this->parser->parse($view, $out, true)
+        ));
+    }
 }
-
-/* End of file installer.php */

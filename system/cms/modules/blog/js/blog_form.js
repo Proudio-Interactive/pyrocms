@@ -1,62 +1,52 @@
-(function($) {
-	$(function(){
+(function ($) {
+	$(function () {
 
-		form = $('form.crud');
-		
-		$('input[name="title"]', form).keyup($.debounce(350, function(e){
-			$.post(SITE_URL + 'ajax/url_title', { title : $(this).val() }, function(slug){
-				$('input[name="slug"]', form).val( slug );
-			});
-		}));
-		
-		$('#blog-options-tab ol li:first a').colorbox({
+		$('a#category-shortcut').colorbox({
 			srollable: false,
 			innerWidth: 600,
 			innerHeight: 280,
 			href: SITE_URL + 'admin/blog/categories/create_ajax',
-			onComplete: function() {
+			onComplete: function () {
 				$.colorbox.resize();
-				$('form#categories').removeAttr('action');
-				$('form#categories').live('submit', function(e) {
-					
+                pyro.generate_slug('#cboxLoadedContent input[name="title"]', '#cboxLoadedContent input[name="slug"]');
+                
+				var $form_categories = $('form#categories');
+				$form_categories.removeAttr('action');
+				$form_categories.live('submit', function (e) {
+
 					var form_data = $(this).serialize();
-					
+
 					$.ajax({
 						url: SITE_URL + 'admin/blog/categories/create_ajax',
 						type: "POST",
-					        data: form_data,
-						success: function(obj) {
-							
-							if(obj.status == 'ok') {
-								
+						data: form_data,
+						success: function (obj) {
+
+							if (obj.status == 'ok') {
+
 								//succesfull db insert do this stuff
-								var select = 'select[name=category_id]';
-								var opt_val = obj.category_id;
-								var opt_text = obj.title;
-								var option = '<option value="'+opt_val+'" selected="selected">'+opt_text+'</option>';
-								
+								var $select = $('#category select');
 								//append to dropdown the new option
-								$(select).append(option);
-																
-								//uniform workaround
-								$('#blog-options-tab li:first span').html(obj.title);
-								
+								$select.append('<option value="' + obj.category_id + '" selected="selected">' + obj.title + '</option>');
+								$select.trigger("liszt:updated");
+								// TODO work this out? //uniform workaround
+								$(document.getElementById('blog-options-tab')).find('li').first().find('span').html(obj.title);
+
 								//close the colorbox
 								$.colorbox.close();
 							} else {
 								//no dice
-							
+
 								//append the message to the dom
-								$('#cboxLoadedContent').html(obj.message + obj.form);
-								$('#cboxLoadedContent p:first').addClass('notification error').show();
+								var $cboxLoadedContent = $(document.getElementById('cboxLoadedContent'));
+								$cboxLoadedContent.html(obj.message + obj.form);
+								$cboxLoadedContent.find('p').first().addClass('notification error').show();
 							}
 						}
-						
-						
 					});
 					e.preventDefault();
 				});
-				
+
 			}
 		});
 	});

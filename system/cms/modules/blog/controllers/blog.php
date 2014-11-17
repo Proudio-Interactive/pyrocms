@@ -1,155 +1,412 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
+use Pyro\Module\Blog\BlogCategoryModel;
+use Pyro\Module\Blog\BlogEntryModel;
+use Pyro\Module\Keywords\Model\Applied;
+use Pyro\Module\Keywords\Model\Keyword;
+
+/**
+ * Public Blog module controller
+ *
+ * @author  PyroCMS Dev Team
+ * @package PyroCMS\Core\Modules\Blog\Controllers
+ */
 class Blog extends Public_Controller
 {
-	public function __construct()
-	{
-		parent::__construct();
-		$this->load->model('blog_m');
-		$this->load->model('blog_categories_m');
-		$this->load->model('comments/comments_m');
-		$this->lang->load('blog');
-	}
+    /**
+     * Every time this controller is called should:
+     * - load the blog and blog_categories models.
+     * - load the keywords library.
+     * - load the blog language file.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->library(array('keywords/keywords'));
+        $this->lang->load('blog');
 
-	// blog/page/x also routes here
-	public function index()
-	{
-		$this->data->pagination = create_pagination('blog/page', $this->blog_m->count_by(array('status' => 'live')), NULL, 3);
-		$this->data->blog = $this->blog_m->limit($this->data->pagination['limit'])->get_many_by(array('status' => 'live'));
+        $this->blogs = new BlogEntryModel;
+        $this->categories = new BlogCategoryModel;
+    }
 
-		// Set meta description based on post titles
-		$meta = $this->_posts_metadata($this->data->blog);
+    /**
+     * Index
+     *
+     * List out the blog posts.
+     *
+     * URIs such as `blog/page/x` also route here.
+     */
+    public function index()
+    {
+        // Total posts
+        $total = $this->blogs->live()->count();
 
-		$this->template
-			->title($this->module_details['name'])
-			->set_breadcrumb( lang('blog_blog_title'))
-			->set_metadata('description', $meta['description'])
-			->set_metadata('keywords', $meta['keywords'])
-			->build('index', $this->data);
-	}
+        // Skip
+        if (ci()->input->get('page')) {
+            $skip = (ci()->input->get('page') - 1) * Settings::get('records_per_page');
+        } else {
+            $skip = 0;
+        }
 
-	public function category($slug = '')
-	{
-		$slug OR redirect('blog');
+        // Get the latest blog posts
+        $posts = $this->blogs
+            ->findManyPosts(Settings::get('records_per_page'), $skip, 'category')
+            ->getPresenter('plugin');
 
-		// Get category data
-		$category = $this->blog_categories_m->get_by('slug', $slug) OR show_404();
+        // Create pagination
+        $pagination = create_pagination(
+            'blog',
+            $total,
+            Settings::get('records_per_page')
+        );
 
-		// Count total blog posts and work out how many pages exist
-		$pagination = create_pagination('blog/category/'.$slug, $this->blog_m->count_by(array(
-			'category'=> $slug,
-			'status' => 'live'
-		)), NULL, 4);
+        // Set meta description based on post titles
+        $meta = $this->postsMetadata($posts);
 
-		// Get the current page of blog posts
-		$blog = $this->blog_m->limit($pagination['limit'])->get_many_by(array(
-			'category'=> $slug,
-			'status' => 'live'
-		));
+        // Go!
+        $this->template
+            ->title($this->module_details['name'])
+            ->set_breadcrumb(lang('blog:blog_title'))
+            ->set_metadata('og:title', $this->module_details['name'], 'og')
+            ->set_metadata('og:type', 'blog', 'og')
+            ->set_metadata('og:url', current_url(), 'og')
+            ->set_metadata('og:description', $meta['description'], 'og')
+            ->set_metadata('description', $meta['description'])
+            ->set_metadata('keywords', $meta['keywords'])
+            ->set('posts', $posts->isEmpty() ? false : $posts)
+            ->set('pagination', $pagination['links'])
+            ->build('posts');
+    }
 
-		// Set meta description based on post titles
-		$meta = $this->_posts_metadata($blog);
+    /**
+     * Lists the posts in a specific category.
+     *
+     * @param string $slug The slug of the category.
+     */
+    public function category($slug = '')
+    {
+        $slug or redirect('blog');
 
-		// Build the page
-		$this->template->title($this->module_details['name'], $category->title )
-			->set_metadata('description', $category->title.'. '.$meta['description'] )
-			->set_metadata('keywords', $category->title )
-			->set_breadcrumb( lang('blog_blog_title'), 'blog')
-			->set_breadcrumb( $category->title )
-			->set('blog', $blog)
-			->set('category', $category)
-			->set('pagination', $pagination)
-			->build('category', $this->data );
-	}
+        // Get category data
+        $category = $this->categories->findBySlug($slug);
 
-	public function archive($year = NULL, $month = '01')
-	{
-		$year OR $year = date('Y');
-		$month_date = new DateTime($year.'-'.$month.'-01');
-		$this->data->pagination = create_pagination('blog/archive/'.$year.'/'.$month, $this->blog_m->count_by(array('year'=>$year,'month'=>$month)), NULL, 5);
-		$this->data->blog = $this->blog_m->limit($this->data->pagination['limit'])->get_many_by(array('year'=> $year,'month'=> $month));
-		$this->data->month_year = format_date($month_date->format('U'), lang('blog_archive_date_format'));
+        if (! $category) {
+            show_404();
+        }
 
-		// Set meta description based on post titles
-		$meta = $this->_posts_metadata($this->data->blog);
+        // Total posts
+        $total = $this->blogs
+            ->where('status', '=', 'live')
+            ->where('category_id', '=', $category->id)
+            ->count();
 
-		$this->template->title( $this->data->month_year, $this->lang->line('blog_archive_title'), $this->lang->line('blog_blog_title'))
-			->set_metadata('description', $this->data->month_year.'. '.$meta['description'])
-			->set_metadata('keywords', $this->data->month_year.', '.$meta['keywords'])
-			->set_breadcrumb($this->lang->line('blog_blog_title'), 'blog')
-			->set_breadcrumb($this->lang->line('blog_archive_title').': '.format_date($month_date->format('U'), lang('blog_archive_date_format')))
-			->build('archive', $this->data);
-	}
+        // Skip
+        if (ci()->input->get('page')) {
+            $skip = (ci()->input->get('page')-1) * Settings::get('records_per_page');
+        } else {
+            $skip = 0;
+        }
 
-	// Public: View an post
-	public function view($slug = '')
-	{
-		if ( ! $slug or ! $post = $this->blog_m->get_by('slug', $slug))
-		{
-			redirect('blog');
-		}
+        // Get the latest blog posts
+        $posts = $category
+            ->publishedPosts(Settings::get('records_per_page'), $skip)
+            ->get()
+            ->getPresenter('plugin');
 
-		if ($post->status != 'live' && ! $this->ion_auth->is_admin())
-		{
-			redirect('blog');
-		}
+        // Create pagination
+        $pagination = create_pagination(
+            'blog',
+            $total,
+            Settings::get('records_per_page')
+        );
 
-		$post->author = $this->ion_auth->get_user($post->author_id);
+        // Set meta description based on post titles
+        $meta = $this->postsMetadata($posts);
 
-		// IF this post uses a category, grab it
-		if ($post->category_id && ($category = $this->blog_categories_m->get($post->category_id)))
-		{
-			$post->category = $category;
-		}
+        // Build the page
+        $this->template->title($this->module_details['name'], $category->title)
+            ->set_metadata('description', $category->title.'. '.$meta['description'])
+            ->set_metadata('keywords', $category->title)
+            ->set_breadcrumb(lang('blog:blog_title'), 'blog')
+            ->set_breadcrumb($category->title)
+            ->set('pagination', $pagination['links'])
+			->set('posts', $posts->isEmpty() ? false : $posts)
+            ->set('category', (array) $category)
+            ->build('posts');
+    }
 
-		// Set some defaults
-		else
-		{
-			$post->category->id		= 0;
-			$post->category->slug	= '';
-			$post->category->title	= '';
-		}
+    /**
+     * Lists the posts in a specific year/month.
+     *
+     * @param null|string $year  The year to show the posts for.
+     * @param string      $month The month to show the posts for.
+     */
+    public function archive($year = null, $month = '01')
+    {
+        $year or $year = date('Y');
+        $month_date = new DateTime($year.'-'.$month.'-01');
 
-		$this->session->set_flashdata(array('referrer' => $this->uri->uri_string));
+        // Total posts
+        $total = $this->blogs
+            ->where('status', '=', 'live')
+            ->whereYear('created_at', '=', $year)
+            ->whereMonth('created_at', '=', $month)
+            ->count();
 
-		$this->template->title($post->title, lang('blog_blog_title'))
-			->set_metadata('description', $post->intro)
-			->set_metadata('keywords', $post->category->title.' '.$post->title)
-			->set_breadcrumb(lang('blog_blog_title'), 'blog');
+        // Skip
+        if (ci()->input->get('page')) {
+            $skip = (ci()->input->get('page')-1)*Settings::get('records_per_page');
+        } else {
+            $skip = 0;
+        }
 
-		if ($post->category->id > 0)
-		{
-			$this->template->set_breadcrumb($post->category->title, 'blog/category/'.$post->category->slug);
-		}
+        // Get the latest blog posts
+        $posts = $this->blogs
+            ->where('status', '=', 'live')
+            ->whereYear('created_at', '=', $year)
+            ->whereMonth('created_at', '=', $month)
+            ->orderBy('created_at', 'DESC')
+            ->take(Settings::get('records_per_page'))
+            ->skip($skip)
+            ->get()
+            ->getPresenter('string');
 
-		$this->template
-			->set_breadcrumb($post->title)
-			->set('post', $post)
-			->build('view', $this->data);
-	}
+        // Create pagination
+        $pagination = create_pagination(
+            'blog',
+            $total,
+            Settings::get('records_per_page')
+        );
 
-	// Private methods not used for display
-	private function _posts_metadata(&$posts = array())
-	{
-		$keywords = array();
-		$description = array();
+        // Set meta description based on post titles
+        $meta = $this->postsMetadata($posts);
 
-		// Loop through posts and use titles for meta description
-		if(!empty($posts))
-		{
-			foreach($posts as &$post)
-			{
-				if($post->category_title)
-				{
-					$keywords[$post->category_id] = $post->category_title .', '. $post->category_slug;
-				}
-				$description[] = $post->title;
-			}
-		}
+        // Process
+        $posts = $this->processPosts($posts);
 
-		return array(
-			'keywords' => implode(', ', $keywords),
-			'description' => implode(', ', $description)
-		);
-	}
+        $this->template
+            ->title($month_year, lang('blog:archive_title'), lang('blog:blog_title'))
+            ->set_metadata('description', $month_year.'. '.$meta['description'])
+            ->set_metadata('keywords', $month_year.', '.$meta['keywords'])
+            ->set_breadcrumb(lang('blog:blog_title'), 'blog')
+            ->set_breadcrumb(lang('blog:archive_title').': '.format_date($month_date->format('U'), lang('blog:archive_date_format')))
+            ->set('pagination', $pagination['links'])
+            ->set('posts', $posts->isEmpty() ? false : $posts)
+            ->set('month_year', $month_year)
+            ->build('archive');
+    }
+
+    /**
+     * View a post
+     *
+     * @param string $slug The slug of the blog post.
+     */
+    public function view($slug)
+    {
+        // We need a slug to make this work.
+        if (! $slug) {
+            redirect('blog');
+        }
+
+        // Get the latest blog posts
+        $post = $this->blogs->findBySlug($slug);
+
+        if (! is_object(ci()->current_user) or ! ci()->current_user->isSuperUser()) {
+            if (! $post or $post['status'] !== 'live') {
+                redirect('blog');
+            }
+        }
+
+        $this->singleView($post);
+    }
+
+    /**
+     * Preview a post
+     *
+     * @param string $hash the preview_hash of post
+     */
+    public function preview($hash = '')
+    {
+        if (! $hash) {
+            redirect('blog');
+        }
+
+        $post = $this->blogs->findByPreviewHash($hash);
+       
+        if (! $post) {
+            redirect('blog');
+        }
+
+        if ($post->status === 'live') {
+            redirect('blog/'.($post->created_at->format('Y/m')).'/'.$post->slug);
+        }
+
+        // Set index nofollow to attempt to avoid search engine indexing
+        $this->template->set_metadata('index', 'nofollow');
+
+        $this->singleView($post);
+    }
+
+    /**
+     * Tagged Posts
+     *
+     * Displays blog posts tagged with a
+     * tag (pulled from the URI)
+     *
+     * @param string $tag
+     */
+    public function tagged($tag = '')
+    {
+        // decode encoded cyrillic characters
+        $tag = rawurldecode($tag) or redirect('blog');
+
+        $tag = Keyword::whereName($tag)->first();
+        $ids = Applied::whereEntryType(get_class($this->blogs))->get()->lists('entry_id');
+        $ids = $ids + array(0);
+
+        // Total posts
+        $total = $this->blogs->whereIn('id', $ids)->count();
+
+        // Skip
+        if (ci()->input->get('page')) {
+            $skip = (ci()->input->get('page')-1)*Settings::get('records_per_page');
+        } else {
+            $skip = 0;
+        }
+
+        // Get the latest blog posts
+        $posts = $this->blogs
+            ->where('status', '=', 'live')
+            ->whereIn('id', $ids)
+            ->orderBy('created_at', 'DESC')
+            ->take(Settings::get('records_per_page'))
+            ->skip($skip)
+            ->get()
+            ->getPresenter();
+
+        // Create pagination
+        $pagination = create_pagination(
+            'blog',
+            $total,
+            Settings::get('records_per_page')
+        );
+
+        $pagination['links'] = str_replace('-1', '1', $pagination['links']);
+
+        // Set meta description based on post titles
+        $meta = $this->postsMetadata($posts);
+
+        if ($tag) {
+            $name = $tag->name;
+        } else {
+            $name = '';
+        }
+
+
+        // Build the page
+        $this->template
+            ->title($this->module_details['name'], lang('blog:tagged_label').': '.$name)
+            ->set_metadata('description', lang('blog:tagged_label').': '.$name.'. '.$meta['description'])
+            ->set_metadata('keywords', $name)
+            ->set_breadcrumb(lang('blog:blog_title'), 'blog')
+            ->set_breadcrumb(lang('blog:tagged_label').': '.$name)
+            ->set('pagination', $pagination['links'])
+            ->set('posts', $posts->isEmpty() ? false : $posts)
+            ->set('tag', $tag)
+            ->build('posts');
+    }
+
+    /**
+     * Posts Metadata
+     *
+     * @param array $posts
+     *
+     * @return array keywords and description
+     */
+    protected function postsMetadata($posts = array())
+    {
+        $keywords = array();
+        $description = array();
+
+        // Loop through posts and use titles for meta description
+        if (! empty($posts)) {
+            foreach ($posts as $post) {
+                if (isset($post->category->title) and ! in_array($post->category->title, $keywords)) {
+                    $keywords[] = $post->category->title;
+                }
+
+                $description[] = $post->title;
+            }
+        }
+
+        return array(
+            'keywords' => implode(', ', $keywords),
+            'description' => implode(', ', $description)
+        );
+    }
+
+    /**
+     * Single View
+     *
+     * Generate a page for viewing a single
+     * blog post.
+     *
+     * @param 	array $post The post to view
+     * @return 	void
+     */
+    protected function singleView($post)
+    {
+        $this->session->set_flashdata(array('referrer' => $this->uri->uri_string()));
+
+        $this->template->set_breadcrumb(lang('blog:blog_title'), 'blog');
+
+        if ($post->category_id > 0) {
+            // Get the category. We'll just do it ourselves
+            // since we need an array.
+            if ($category = $post->category) {
+                $this->template->set_breadcrumb($category->title, 'blog/category/'.$category->slug);
+
+                // Set category OG metadata
+                $this->template->set_metadata('article:section', $category->title, 'og');
+            }
+        }
+
+        // Add in OG keywords
+        foreach (explode(',', $post['keywords']) as $keyword) {
+            $this->template->set_metadata('article:tag', $keyword, 'og');
+        }
+
+        // If comments are enabled, go fetch them all
+        if (Settings::get('enable_comments')) {
+            // Load Comments so we can work out what to do with them
+            $this->load->library('comments/comments', array(
+                'entry_id' => $post['id'],
+                'entry_title' => $post['title'],
+                'module' => 'blog',
+                'singular' => 'blog:post',
+                'plural' => 'blog:posts',
+            ));
+
+            // Comments enabled can be 'no', 'always', or a strtotime compatable difference string, so "2 weeks"
+            $this->template->set('form_display', (
+                $post->comments_enabled === 'always' or
+                    ($post->comments_enabled !== 'no' and time() < strtotime('+'.$post->comments_enabled, strtotime($post->created_at)))
+            ));
+        }
+
+        $this->template
+            ->title($post['title'], lang('blog:blog_title'))
+            ->set_metadata('og:type', 'article', 'og')
+            ->set_metadata('og:url', current_url(), 'og')
+            ->set_metadata('og:title', $post['title'], 'og')
+            ->set_metadata('og:site_name', Settings::get('site_name'), 'og')
+            ->set_metadata('og:description', $post['intro'], 'og')
+            ->set_metadata('article:published_time', date(DATE_ISO8601, strtotime($post->created_at)), 'og')
+            ->set_metadata('article:modified_time', date(DATE_ISO8601, strtotime($post['updated_at'])), 'og')
+            ->set_metadata('description', strip_tags($post['intro']))
+            ->set_metadata('keywords', $post['keywords'])
+            ->set_breadcrumb($post['title'])
+            ->set('post', array($post))
+            ->build('view');
+    }
 }

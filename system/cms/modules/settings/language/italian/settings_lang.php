@@ -1,145 +1,159 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
 #section settings
-$lang['settings_site_name'] 					= 'Nome del Sito';
-$lang['settings_site_name_desc'] 				= 'Il nome del sito per i titoli della pagina e per essere usato in giro per il sito.';
+$lang['settings:site_name'] 					= 'Nome del Sito';
+$lang['settings:site_name_desc'] 				= 'Il nome del sito per i titoli della pagina e per essere usato in giro per il sito.';
 
-$lang['settings_site_slogan'] 					= 'Slogan del sito';
-$lang['settings_site_slogan_desc'] 				= 'Lo slogan del sito per i titoli della pagina e per essere usato in giro per il sito.';
+$lang['settings:site_slogan'] 					= 'Slogan del sito';
+$lang['settings:site_slogan_desc'] 				= 'Lo slogan del sito per i titoli della pagina e per essere usato in giro per il sito.';
 
-$lang['settings_site_lang']						= 'Site Language'; #translate
-$lang['settings_site_lang_desc']				= 'The native language of the website, used to choose templates of e-mail internal notifications and receiving visitors contact and other features that should not bend the language of a user.'; #translate
+$lang['settings:site_lang']						= 'Lingua del sito';
+$lang['settings:site_lang_desc']				= 'Lingua nativa del sito, verrà usata per la scelta dei template email, notifiche interne, contatti con i visitatori e tutte le altre funzionalità che richiedono comunicazioni con gli utenti.';
 
-$lang['settings_contact_email'] 				= 'Email per contatti';
-$lang['settings_contact_email_desc'] 			= 'Tuttele email dagli utenti, dai visitatori e dal sito saranno dirette a questo indizzo email.';
+$lang['settings:contact_email'] 				= 'Email per contatti';
+$lang['settings:contact_email_desc'] 			= 'Tutte le email dagli utenti, dai visitatori e dal sito saranno dirette a questo indirizzo email.';
 
-$lang['settings_server_email'] 					= 'Server Email';
-$lang['settings_server_email_desc'] 			= 'Tutte le email agli utenti arriveranno da questo indizzo email.';
+$lang['settings:server_email'] 					= 'Server Email';
+$lang['settings:server_email_desc'] 			= 'Tutte le email agli utenti arriveranno da questo indirizzo email.';
 
-$lang['settings_meta_topic']					= 'Meta Topic';
-$lang['settings_meta_topic_desc']				= 'Due o tre parole che descrivano il tipo di società/sito.';
+$lang['settings:meta_topic']					= 'Meta Topic';
+$lang['settings:meta_topic_desc']				= 'Due o tre parole che descrivano il tipo di società/sito.';
 
-$lang['settings_currency'] 						= 'Valuta';
-$lang['settings_currency_desc'] 				= 'Il simbolo della valuta da usare per prodotti, servizi, ecc.';
+$lang['settings:currency'] 						= 'Valuta';
+$lang['settings:currency_desc'] 				= 'Il simbolo della valuta da usare per prodotti, servizi, ecc.';
 
-$lang['settings_dashboard_rss'] 				= 'Dashboard RSS Feed';
-$lang['settings_dashboard_rss_desc'] 			= 'Collegamento ad un feed RSS che verrà mostrato nella dashboard.';
+$lang['settings:dashboard_rss'] 				= 'Dashboard RSS Feed';
+$lang['settings:dashboard_rss_desc'] 			= 'Collegamento ad un feed RSS che verrà mostrato nella dashboard.';
 
-$lang['settings_dashboard_rss_count'] 			= 'Post RSS della Dashboard';
-$lang['settings_dashboard_rss_count_desc'] 		= 'Quanti post RSS vuoi mostrare nella dashboard ?';
+$lang['settings:dashboard_rss_count'] 			= 'Post RSS della Dashboard';
+$lang['settings:dashboard_rss_count_desc'] 		= 'Quanti post RSS vuoi mostrare nella dashboard ?';
 
-$lang['settings_date_format'] 					= 'Date Format'; #translate
-$lang['settings_date_format_desc']				= 'How should dates be displayed accross the website and control panel? ' .
-													'Using the <a href="http://php.net/manual/en/function.date.php" target="_black">date format</a> from PHP - OR - ' .
-													'Using the format of <a href="http://php.net/manual/en/function.strftime.php" target="_black">strings formated as date</a> from PHP.'; #translate
+$lang['settings:date_format'] 					= 'Formato data';
+$lang['settings:date_format_desc']				= 'Come devono essere mostrate le date nel sito e nel pannello di controllo? ' .
+                                                    'Devi utilizzare il <a href="http://php.net/manual/en/function.date.php" target="_black">formato data</a> del PHP - oppure - ' .
+                                                    'Utilizza il formato <a href="http://php.net/manual/en/function.strftime.php" target="_black">stringa al posto della data</a> del PHP.';
 
-$lang['settings_frontend_enabled'] 				= 'Stato del Sito';
-$lang['settings_frontend_enabled_desc'] 		= 'Usa questa opzione per rendere o meno visibile il frontend del sito. Utile quando vuoi mettere offline il sito per manutenzione';
+$lang['settings:frontend_enabled'] 				= 'Stato del Sito';
+$lang['settings:frontend_enabled_desc'] 		= 'Usa questa opzione per rendere o meno visibile il frontend del sito. Utile quando vuoi mettere offline il sito per manutenzione';
 
-$lang['settings_mail_protocol'] 				= 'Mail Protocol'; #translate
-$lang['settings_mail_protocol_desc'] 			= 'Select desired email protocol.'; #translate
+$lang['settings:mail_protocol'] 				= 'Protocollo email';
+$lang['settings:mail_protocol_desc'] 			= 'Seleziona il protocollo di invio email che preferisci.';
 
-$lang['settings_mail_sendmail_path'] 			= 'Sendmail Path'; #translate
-$lang['settings_mail_sendmail_path_desc']		= 'Path to server sendmail binary.'; #translate
+$lang['settings:mail_sendmail_path'] 			= 'Sendmail Path';
+$lang['settings:mail_sendmail_path_desc']		= 'Path sul server per il file binario sendmail.';
 
-$lang['settings_mail_smtp_host'] 				= 'SMTP Host'; #translate
-$lang['settings_mail_smtp_host_desc'] 			= 'The host name of your smtp server.'; #translate
+$lang['settings:mail_smtp_host'] 				= 'SMTP Host';
+$lang['settings:mail_smtp_host_desc'] 			= 'Il nome del tuo server smtp.';
 
-$lang['settings_mail_smtp_pass'] 				= 'SMTP password'; #translate
-$lang['settings_mail_smtp_pass_desc'] 			= 'SMTP password.'; #translate
+$lang['settings:mail_smtp_pass'] 				= 'SMTP password';
+$lang['settings:mail_smtp_pass_desc'] 			= 'SMTP password.';
 
-$lang['settings_mail_smtp_port'] 				= 'SMTP Port'; #translate
-$lang['settings_mail_smtp_port_desc'] 			= 'SMTP port number.'; #translate
+$lang['settings:mail_smtp_port'] 				= 'Porta SMTP';
+$lang['settings:mail_smtp_port_desc'] 			= 'Numero porta SMTP.';
 
-$lang['settings_mail_smtp_user'] 				= 'SMTP User Name'; #translate
-$lang['settings_mail_smtp_user_desc'] 			= 'SMTP user name.'; #translate
+$lang['settings:mail_smtp_user'] 				= 'SMTP User Name';
+$lang['settings:mail_smtp_user_desc'] 			= 'SMTP user name.';
 
-$lang['settings_unavailable_message']			= 'Avviso di Non Disponibile';
-$lang['settings_unavailable_message_desc'] 		= 'Quando il sito è messo offline o c\' è un grave problema, agli utenti verrà mostrato questo avviso.';
+$lang['settings:unavailable_message']			= 'Avviso di Non Disponibile';
+$lang['settings:unavailable_message_desc'] 		= 'Quando il sito è messo offline o c\'è un grave problema, agli utenti verrà mostrato questo avviso.';
 
-$lang['settings_default_theme'] 				= 'Tema predefinito';
-$lang['settings_default_theme_desc'] 			= 'Seleziona il tema che vuoi sia il predefinito per gli utenti.';
+$lang['settings:default_theme'] 				= 'Tema predefinito';
+$lang['settings:default_theme_desc'] 			= 'Seleziona il tema che vuoi sia il predefinito per gli utenti.';
 
-$lang['settings_activation_email'] 				= 'Attivazione tramite Email';
-$lang['settings_activation_email_desc'] 		= 'Invia un email con un collegamento per l\' attivazione quando un utente si iscrive. Disabilitandolo solo gli amministratori potranno attivare i profili.';
+$lang['settings:activation_email'] 				= 'Attivazione tramite Email';
+$lang['settings:activation_email_desc'] 		= 'Invia un email con un collegamento per l\' attivazione quando un utente si iscrive. Disabilitandolo solo gli amministratori potranno attivare i profili.';
 
-$lang['settings_records_per_page'] 				= 'Records Per Pagina';
-$lang['settings_records_per_page_desc'] 		= 'Quanti records per pagina dobbiamo mostrare sella sezione di amministrazione ?';
+$lang['settings:records_per_page'] 				= 'Records Per Pagina';
+$lang['settings:records_per_page_desc'] 		= 'Quanti records per pagina dobbiamo mostrare sella sezione di amministrazione ?';
 
-$lang['settings_rss_feed_items'] 				= 'Numero post Feed';
-$lang['settings_rss_feed_items_desc'] 			= 'Quanti post dobbiamo mostrare nei feed RSS/Notizie?';
+$lang['settings:rss_feed_items'] 				= 'Numero post Feed';
+$lang['settings:rss_feed_items_desc'] 			= 'Quanti post dobbiamo mostrare nei feed RSS/Notizie?';
 
-$lang['settings_require_lastname'] 				= 'Cognome richiesto?';
-$lang['settings_require_lastname_desc'] 		= 'In alcune situazioniil cognome potrebbe non servire. Vuoi forzare gli utenti ad inserirlo o no?';
 
-$lang['settings_enable_profiles'] 				= 'Abilita profili';
-$lang['settings_enable_profiles_desc'] 			= 'Permetti agli utenti di aggiungere e modificare profili.';
+$lang['settings:enable_profiles'] 				= 'Abilita profili';
+$lang['settings:enable_profiles_desc'] 			= 'Permetti agli utenti di aggiungere e modificare profili.';
 
-$lang['settings_ga_email'] 						= 'Google Analytic E-mail'; #translate
-$lang['settings_ga_email_desc']					= 'E-mail address used for Google Analytics, we need this to show the graph on the dashboard.'; #translate
+$lang['settings:ga_email'] 						= 'Google Analytic E-mail';
+$lang['settings:ga_email_desc']					= 'Indirizzo email da utilizzare per le statistiche di Google Analytics, necessario per mostrare nella dashbord un grafico di monitoraggio.';
 
-$lang['settings_ga_password'] 					= 'Google Analytic Password'; #translate
-$lang['settings_ga_password_desc']				= 'Google Analytics password. This is also needed this to show the graph on the dashboard.'; #translate
+$lang['settings:ga_password'] 					= 'Google Analytic Password';
+$lang['settings:ga_password_desc']				= 'Google Analytics password. Anche la password è necessaria per mostrare il grafico nella dashbord.';
 
-$lang['settings_ga_profile'] 					= 'Google Analytic Profile'; #translate
-$lang['settings_ga_profile_desc']				= 'Profile ID for this website in Google Analytics.'; #translate
+$lang['settings:ga_profile'] 					= 'Google Analytic Profile';
+$lang['settings:ga_profile_desc']				= 'ID del profilo di questo sito in Google Analytics.';
 
-$lang['settings_ga_tracking'] 					= 'Google Tracking Code'; #translate
-$lang['settings_ga_tracking_desc']				= 'Enter your Google Analytic Tracking Code to activate Google Analytics view data capturing. E.g: UA-19483569-6'; #translate
+$lang['settings:ga_tracking'] 					= 'Google Tracking Code';
+$lang['settings:ga_tracking_desc']				= 'Inserisci il codice di tracciamento (Google Analytic Tracking Code) per attivare la possibilità di salvare i dati per Google Analytic. Es: UA-19483569-6';
 
-$lang['settings_twitter_username'] 				= 'Username';
-$lang['settings_twitter_username_desc'] 		= 'Twitter username.';
+$lang['settings:akismet_api_key'] 				= 'Akismet API Key';
+$lang['settings:akismet_api_key_desc'] 			= 'Akismet è uno spam-blocker prodotto dal team di WordPress. Tiene sotto controllo lo spam senza obbligare gli utenti a superare i moduli CAPTCHA.';
 
-$lang['settings_twitter_consumer_key'] 			= 'Consumer Key';
-$lang['settings_twitter_consumer_key_desc'] 	= 'Twitter consumer key.';
+$lang['settings:comment_order'] 				= 'Ordine commenti';
+$lang['settings:comment_order_desc']			= 'Orndine in cui mostrare i commenti.';
 
-$lang['settings_twitter_consumer_key_secret'] 	= 'Consumer Key Secret';
-$lang['settings_twitter_consumer_key_secret_desc'] = 'Twitter consumer key secret.';
+$lang['settings:moderate_comments'] 			= 'Moderazione dei Commenti';
+$lang['settings:moderate_comments_desc']		= 'Obbliga che i commenti siano approvati prima di comparire sul sito.';
 
-$lang['settings_twitter_blog']					= 'Integrazione Twitter &amp; Notizie.';
-$lang['settings_twitter_blog_desc'] 			= 'Vuoi postare i collegamenti alle nuove notizie su Twitter?';
+$lang['settings:comment_markdown']				= 'Permetti Markdown';
+$lang['settings:comment_markdown_desc']			= 'Vuoi permettere ai visitatori di commentare utilizzando il Markdown?';
 
-$lang['settings_twitter_feed_count'] 			= 'Numero dei Feed';
-$lang['settings_twitter_feed_count_desc'] 		= 'Quanti tweets devono essere restituiti blocco dei feed di Twitter?';
+$lang['settings:version'] 						= 'Versione';
+$lang['settings:version_desc'] 					= '';
 
-$lang['settings_twitter_cache'] 				= 'Tempo di caching';
-$lang['settings_twitter_cache_desc'] 			= 'Per quanti minuti devono essere conservati temporaneamente i tuoi Tweets?';
+$lang['settings:site_public_lang']				= 'Lingue Publiche';
+$lang['settings:site_public_lang_desc']			= 'Quali solo le lingue realmente supportate nel front-end del tuo sito web?';
 
-$lang['settings_akismet_api_key'] 				= 'Akismet API Key';
-$lang['settings_akismet_api_key_desc'] 			= 'Akismet è uno spam-blocker prodotto dal team di WordPress. Tiene sotto controllo lo spam senza obbligare gli utenti a superare i moduli CAPTCHA.';
+$lang['settings:admin_force_https']				= 'Forzare HTTPS per il Pannello di Controllo?';
+$lang['settings:admin_force_https_desc']		= 'Permettere solo il protocollo HTTPS quando si utilizza il Pannello di Controllo?';
 
-$lang['settings_comment_order'] 				= 'Comment Order'; #translate
-$lang['settings_comment_order_desc']			= 'Sort order in which to display comments.'; #translate
+$lang['settings:files_cache']					= 'Files Cache';
+$lang['settings:files_cache_desc']				= 'Quando si mostra una immagine via site.com/files quando deve essere eliminata dalla cache?';
 
-$lang['settings_moderate_comments'] 			= 'Moderazione dei Commenti';
-$lang['settings_moderate_comments_desc']		= 'Obbliga che i commenti siano approvati prima di comparire sul sito.';
+$lang['settings:auto_username']					= 'Auto Username';
+$lang['settings:auto_username_desc']			= 'Crea un Username in automatico, vuol dire che gli utenti salteranno questo passaggio durante la registrazione.';
 
-$lang['settings_version'] 						= 'Versione';
-$lang['settings_version_desc'] 					= '';
+$lang['settings:registered_email']				= 'Email utente registrato';
+$lang['settings:registered_email_desc']			= 'Inviare una email all\'indirizzo impostato come contatto quando qualcuno si registra.';
+
+$lang['settings:ckeditor_config']               = 'Configurazione CKEditor';
+$lang['settings:ckeditor_config_desc']          = 'Puoi trovare una lista di configurazioni corrette nella <a target="_blank" href="http://docs.cksource.com/ckeditor_api/symbols/CKEDITOR.config.html">documentazione ufficiale.</a>';
+
+$lang['settings:enable_registration']           = 'Abilita registrazioni';
+$lang['settings:enable_registration_desc']      = 'Permetti agli utenti di registrarti al tuo sito.';
+
+$lang['settings:profile_visibility']            = 'Visibilità profilo';
+$lang['settings:profile_visibility_desc']       = 'Specifica chi può vedere il profilo di un utente nel sito pubblico';
+
+$lang['settings:cdn_domain']                    = 'Dominio CDN';
+$lang['settings:cdn_domain_desc']               = 'il dominio CDN ti consente di scaricare contenuti da diversi server come Amazon CloudFront o MaxCDN.';
 
 #section titles
-$lang['settings_section_general']				= 'Generale';
-$lang['settings_section_integration']			= 'Integrazione';
-$lang['settings_section_comments']				= 'Comments'; #translate
-$lang['settings_section_users']					= 'Utenti';
-$lang['settings_section_statistics']			= 'Statistiche';
-$lang['settings_section_twitter']				= 'Twitter';
+$lang['settings:section_general']				= 'Generale';
+$lang['settings:section_integration']			= 'Integrazione';
+$lang['settings:section_comments']				= 'Commenti';
+$lang['settings:section_users']					= 'Utenti';
+$lang['settings:section_statistics']			= 'Statistiche';
+$lang['settings:section_files']					= 'Files';
 
 #checkbox and radio options
-$lang['settings_form_option_Open']				= 'Aperto';
-$lang['settings_form_option_Closed']			= 'Chiuso';
-$lang['settings_form_option_Enabled']			= 'Abilita';
-$lang['settings_form_option_Disabled']			= 'Disabilita';
-$lang['settings_form_option_Required']			= 'Richiesto';
-$lang['settings_form_option_Optional']			= 'Opzionale';
-$lang['settings_form_option_Oldest First']		= 'Oldest First'; #translate
-$lang['settings_form_option_Newest First']		= 'Newest First'; #translate
+$lang['settings:form_option_Open']				= 'Aperto';
+$lang['settings:form_option_Closed']			= 'Chiuso';
+$lang['settings:form_option_Enabled']			= 'Abilita';
+$lang['settings:form_option_Disabled']			= 'Disabilita';
+$lang['settings:form_option_Required']			= 'Richiesto';
+$lang['settings:form_option_Optional']			= 'Opzionale';
+$lang['settings:form_option_Oldest First']		= 'Prima i più vecchi';
+$lang['settings:form_option_Newest First']		= 'Prima i più nuovi';
+$lang['settings:form_option_Text Only']			= 'Solo testo';
+$lang['settings:form_option_Allow Markdown']	= 'Consenti markdown';
+$lang['settings:form_option_Yes']				= 'Si';
+$lang['settings:form_option_No']				= 'No';
 
 // titles
-$lang['settings_edit_title'] 					= 'Modifica impostazioni';
+$lang['settings:edit_title'] 					= 'Modifica impostazioni';
 
 // messages
-$lang['settings_no_settings']					= 'There are currently no settings.'; #translate
-$lang['settings_save_success'] 					= 'Le tue impostazioni sono state salvate!';
+$lang['settings:no_settings']					= 'Non ci sono impostazioni.';
+$lang['settings:save_success'] 					= 'Le tue impostazioni sono state salvate!';
 
 /* End of file settings_lang.php */
